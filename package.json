@@ -43,9 +43,11 @@
     "cmdk": "1.0.4",
     "date-fns": "4.1.0",
     "embla-carousel-react": "8.5.1",
+    "firebase": "^11.6.1",
+    "framer-motion": "^12.9.2",
     "input-otp": "1.4.1",
     "lucide-react": "^0.454.0",
-    "next": "15.2.4",
+    "next": "15.3.1",
     "next-themes": "^0.4.4",
     "react": "^19",
     "react-day-picker": "8.10.1",
@@ -62,10 +64,15 @@
   },
   "devDependencies": {
     "@types/node": "^22",
-    "@types/react": "^19",
+    "@types/react": "^19.1.1",
     "@types/react-dom": "^19",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "typescript": "^5.8.3"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "sharp"
+    ]
   }
 }

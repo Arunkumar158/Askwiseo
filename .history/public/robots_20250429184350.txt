@@ -1,0 +1,14 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://askwiseo.com/sitemap.xml
+
+# Disallow admin and auth routes
+Disallow: /admin/
+Disallow: /(auth)/
+Disallow: /api/auth/
+
+# Crawl-delay
+Crawl-delay: 10 
