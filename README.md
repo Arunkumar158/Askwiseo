@@ -142,5 +142,5 @@ MIT License.
 ## 🙋‍♂️ Author
 
 Built with 💡 by Arun Kumar  
-Email: your@email.com  
+Email: arunkumar.ai.engineer@gmail.com
 Project: Askwiseo
