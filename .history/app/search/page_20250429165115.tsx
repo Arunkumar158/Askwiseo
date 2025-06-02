@@ -50,9 +50,9 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-4 md:py-8">
+      <div className="container mx-auto px-4 py-8">
         {/* Main content grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Sidebar - Desktop only */}
           <div className="hidden lg:block lg:col-span-3">
             <Card className="h-[calc(100vh-2rem)]">
@@ -83,7 +83,7 @@ export default function SearchPage() {
           </div>
 
           {/* Main search area */}
-          <div className="lg:col-span-9 space-y-4 md:space-y-6">
+          <div className="lg:col-span-9 space-y-6">
             {/* Search bar */}
             <div className="relative">
               <div className="flex items-center space-x-2">
@@ -117,32 +117,32 @@ export default function SearchPage() {
             {/* Search results */}
             <div className="space-y-4">
               {mockResults.map((result) => (
-                <Card key={result.id}>
-                  <CardContent className="p-4 md:p-6">
-                    <div className="space-y-2">
-                      <div className="flex items-start justify-between">
-                        <h3 className="text-lg font-semibold">{result.title}</h3>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon">
-                            <ThumbsUp className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon">
-                            <ThumbsDown className="h-4 w-4" />
-                          </Button>
-                        </div>
+                <Card key={result.id} className="hover:bg-accent/50 transition-colors">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{result.title}</CardTitle>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="icon">
+                          <ThumbsUp className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon">
+                          <ThumbsDown className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <p className="text-muted-foreground">{result.snippet}</p>
-                      <div className="flex flex-wrap gap-2">
-                        {result.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(result.date).toLocaleDateString()}
-                      </p>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      {result.tags.map((tag) => (
+                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                      ))}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">{result.snippet}</p>
+                    <div className="bg-muted p-4 rounded-lg">
+                      <p className="font-medium mb-2">Answer:</p>
+                      <p>{result.answer}</p>
+                    </div>
+                    <Button variant="link" className="mt-4">View in context</Button>
                   </CardContent>
                 </Card>
               ))}

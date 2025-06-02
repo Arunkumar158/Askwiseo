@@ -26,12 +26,12 @@ export function UploadSection({ className, ...props }: UploadSectionProps) {
               </div>
             </div>
           </div>
-          <div className="flex w-full flex-col sm:flex-row gap-2">
-            <Button className="w-full gap-2 bg-violet-600 hover:bg-violet-700">
+          <div className="flex w-full gap-2">
+            <Button className="flex-1 gap-2 bg-violet-600 hover:bg-violet-700">
               <FileText className="h-4 w-4" />
               Select Files
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="flex-1">
               Browse Library
             </Button>
           </div>

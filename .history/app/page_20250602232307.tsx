@@ -10,13 +10,15 @@ export default function DashboardPage() {
   return (
     <DashboardShell>
       <DashboardHeader heading="Dashboard" text="Welcome back to Askwiseo — Your AI Knowledge Companion." />
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <UploadSection className="md:col-span-2 lg:col-span-2" />
-        <PlanTracker className="md:col-span-1 lg:col-span-1" />
-      </div>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <RecentDocuments className="md:col-span-2 lg:col-span-2" />
-        <AIInsights className="md:col-span-2 lg:col-span-1" />
+      <div className="grid gap-4 md:gap-6">
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <UploadSection className="md:col-span-2 lg:col-span-2" />
+          <PlanTracker className="md:col-span-1 lg:col-span-1" />
+        </div>
+        <div className="grid gap-4 md:gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <RecentDocuments className="md:col-span-2 lg:col-span-2" />
+          <AIInsights className="md:col-span-2 lg:col-span-1" />
+        </div>
       </div>
       <div className="mt-8 text-center space-y-2">
         <Link href="/test" className="block text-primary hover:underline">

@@ -3,12 +3,14 @@ import "@/app/globals.css"
 import type { Metadata, Viewport } from "next"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Header } from "@/components/Header"
+import { Header } from "@/components/header"
 import { SiteFooter } from "@/components/site-footer"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { FeedbackButton } from "@/components/feedback-button"
+import { LayoutContent } from "../components/layout-content"
+import { AuthProvider } from "@/contexts/AuthContext"
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -71,20 +73,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SidebarProvider>
-            <div className="flex min-h-screen">
-              <AppSidebar />
-              <div className="flex-1">
-                <Header />
-                <main className="flex-1 pt-16">{children}</main>
-                <SiteFooter />
-              </div>
-            </div>
-            <FeedbackButton />
-          </SidebarProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <SidebarProvider>
+              <LayoutContent>{children}</LayoutContent>
+              <FeedbackButton />
+            </SidebarProvider>
+            <Toaster />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

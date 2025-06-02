@@ -10,6 +10,7 @@ import { SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { FeedbackButton } from "@/components/feedback-button"
 import { LayoutContent } from "../components/layout-content"
+import { AuthProvider } from "@/contexts/AuthContext"
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -72,13 +73,15 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <SidebarProvider>
-            <LayoutContent>{children}</LayoutContent>
-            <FeedbackButton />
-          </SidebarProvider>
-          <Toaster />
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            <SidebarProvider>
+              <LayoutContent>{children}</LayoutContent>
+              <FeedbackButton />
+            </SidebarProvider>
+            <Toaster />
+          </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )
