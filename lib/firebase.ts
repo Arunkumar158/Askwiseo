@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -30,6 +31,7 @@ try {
 // Initialize Firebase services
 const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
+const storage = getStorage(app);
 
 // Initialize Firestore with persistent cache
 const db = initializeFirestore(app, {
@@ -43,4 +45,4 @@ db.onError = (error) => {
   console.error('Firestore error:', error);
 };
 
-export { auth, googleProvider, db }; 
+export { auth, googleProvider, db, storage }; 
