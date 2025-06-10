@@ -129,31 +129,19 @@ export default function SearchPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div 
-                    className={`flex items-center space-x-2 text-sm cursor-pointer hover:text-primary ${activeFilter === 'all' ? 'text-primary' : ''}`}
-                    onClick={() => setActiveFilter('all')}
-                  >
+                  <div className="flex items-center space-x-2 text-sm">
                     <BookOpen className="h-4 w-4" />
                     <span>All Documents</span>
                   </div>
-                  <div 
-                    className={`flex items-center space-x-2 text-sm cursor-pointer hover:text-primary ${activeFilter === 'starred' ? 'text-primary' : ''}`}
-                    onClick={() => setActiveFilter('starred')}
-                  >
+                  <div className="flex items-center space-x-2 text-sm">
                     <Star className="h-4 w-4" />
                     <span>Starred</span>
                   </div>
-                  <div 
-                    className={`flex items-center space-x-2 text-sm cursor-pointer hover:text-primary ${activeFilter === 'recent' ? 'text-primary' : ''}`}
-                    onClick={() => setActiveFilter('recent')}
-                  >
+                  <div className="flex items-center space-x-2 text-sm">
                     <Clock className="h-4 w-4" />
                     <span>Recent</span>
                   </div>
-                  <div 
-                    className={`flex items-center space-x-2 text-sm cursor-pointer hover:text-primary ${activeFilter === 'tags' ? 'text-primary' : ''}`}
-                    onClick={() => setActiveFilter('tags')}
-                  >
+                  <div className="flex items-center space-x-2 text-sm">
                     <Tag className="h-4 w-4" />
                     <span>Tags</span>
                   </div>
@@ -203,18 +191,10 @@ export default function SearchPage() {
                       <div className="flex items-start justify-between">
                         <h3 className="text-lg font-semibold">{result.title}</h3>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleVote(result.id, "up")}
-                          >
+                          <Button variant="ghost" size="icon">
                             <ThumbsUp className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon"
-                            onClick={() => handleVote(result.id, "down")}
-                          >
+                          <Button variant="ghost" size="icon">
                             <ThumbsDown className="h-4 w-4" />
                           </Button>
                         </div>
@@ -247,18 +227,13 @@ export default function SearchPage() {
                       key={search}
                       variant="outline"
                       className="cursor-pointer hover:bg-accent"
-                      onClick={() => handleRecentSearchClick(search)}
                     >
                       {search}
                     </Badge>
                   ))}
                 </div>
               </div>
-              <Button 
-                variant="outline" 
-                className="w-full"
-                onClick={handleSummarize}
-              >
+              <Button variant="outline" className="w-full">
                 Summarize all results
               </Button>
             </div>
