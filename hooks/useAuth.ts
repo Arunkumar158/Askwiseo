@@ -24,15 +24,24 @@ export function useAuth() {
 
   const handleLogout = async () => {
     try {
-      console.log("Starting logout process...");
+      // Clear Firebase session
       await signOut(auth);
-      console.log("Firebase signOut successful");
+      // Clear localStorage/sessionStorage/cookies
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+        // Remove all cookies
+        document.cookie.split(';').forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, '')
+            .replace(/=.*/, '=;expires=' + new Date(0).toUTCString() + ';path=/');
+        });
+      }
       toast.success("Logged out successfully");
-      console.log("Redirecting to signin page...");
-      router.push("/(auth)/signin");
+      router.push("/auth");
     } catch (error) {
-      console.error("Logout error:", error);
       toast.error("Failed to logout. Please try again.");
+      router.push("/auth"); // Always redirect even if error
     }
   };
 
