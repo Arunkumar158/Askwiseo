@@ -70,4 +70,19 @@
   body {
     @apply bg-background text-foreground;
   }
+  button, a, [role="button"] {
+    @apply transition-all duration-200 ease-out;
+  }
+}
+
+@layer utilities {
+  .animate-focus-ring {
+    @apply ring-2 ring-primary/40 ring-offset-2 ring-offset-background;
+    animation: focus-pulse 1.5s ease-in-out infinite;
+  }
+}
+
+@keyframes focus-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }

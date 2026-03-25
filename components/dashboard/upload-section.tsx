@@ -41,7 +41,7 @@ export function UploadSection({ className, ...props }: UploadSectionProps) {
   };
 
   return (
-    <Card className={cn("rounded-2xl shadow-sm", className)} {...props}>
+    <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
       <CardHeader>
         <CardTitle>Upload Documents</CardTitle>
         <CardDescription>Drag and drop your PDFs to convert them into searchable knowledge</CardDescription>
@@ -81,7 +81,7 @@ export function UploadSection({ className, ...props }: UploadSectionProps) {
           )}
           <div className="flex w-full flex-col sm:flex-row gap-2">
             <Button 
-              className="w-full gap-2 bg-violet-600 hover:bg-violet-700"
+              className="w-full gap-2 bg-violet-600 hover:bg-violet-700 active:scale-95 transition-transform"
               onClick={() => fileInputRef.current?.click()}
             >
               <FileText className="h-4 w-4" />
@@ -89,7 +89,7 @@ export function UploadSection({ className, ...props }: UploadSectionProps) {
             </Button>
             <Button 
               variant="outline" 
-              className="w-full"
+              className="w-full active:scale-95 transition-transform"
               onClick={handleBrowseLibrary}
             >
               Browse Library

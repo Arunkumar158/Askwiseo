@@ -85,7 +85,7 @@ export function AppSidebar() {
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
-                <Link href={item.url}>
+                <Link href={item.url} className="transition-all duration-200">
                   <item.icon />
                   <span>{item.title}</span>
                 </Link>

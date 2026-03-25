@@ -12,13 +12,34 @@ interface LayoutContentProps {
 export function LayoutContent({ children }: LayoutContentProps) {
   const pathname = usePathname()
   const isAuthPage = pathname === "/signin" || pathname === "/signup"
+  const isPublicPage = pathname === "/pricing" || pathname === "/contact"
+
+  // Auth pages bypass the entire app shell
+  if (isAuthPage) {
+    return <>{children}</>
+  }
+
+  // Public pages (pricing, contact) keep the sidebar but skip the global header/footer
+  // since they have their own SiteHeader/SiteFooter in their layout
+  if (isPublicPage) {
+    return (
+      <div className="flex min-h-screen flex-col md:flex-row">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-h-screen">
+          {children}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
-      {!isAuthPage && <AppSidebar />}
+      <AppSidebar />
       <div className="flex-1 flex flex-col min-h-screen">
-        {!isAuthPage && <Header />}
-        <main className="flex-1 pt-16 px-4 md:px-6">{children}</main>
+        <Header />
+        <main className="flex-1 pt-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
+        </main>
         <SiteFooter />
       </div>
     </div>

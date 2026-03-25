@@ -8,7 +8,7 @@ interface AIInsightsProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function AIInsights({ className, ...props }: AIInsightsProps) {
   return (
-    <Card className={cn("rounded-2xl shadow-sm", className)} {...props}>
+    <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
       <CardHeader>
         <CardTitle>AI Insights</CardTitle>
         <CardDescription>Analytics and insights from your knowledge base</CardDescription>

@@ -40,7 +40,7 @@ const documents = [
 
 export function RecentDocuments({ className, ...props }: RecentDocumentsProps) {
   return (
-    <Card className={cn("rounded-2xl shadow-sm", className)} {...props}>
+    <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle>Recent Documents</CardTitle>
@@ -54,7 +54,7 @@ export function RecentDocuments({ className, ...props }: RecentDocumentsProps) {
       <CardContent>
         <div className="space-y-4">
           {documents.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3">
+            <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors duration-150 hover:bg-muted/50">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-md bg-violet-100">
                   <FileText className="h-5 w-5 text-violet-600" />

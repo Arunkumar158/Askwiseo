@@ -17,7 +17,7 @@ export function PlanTracker({ className, ...props }: PlanTrackerProps) {
   const queriesLimit = 500
 
   return (
-    <Card className={cn("rounded-2xl shadow-sm", className)} {...props}>
+    <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
       <CardHeader>
         <CardTitle>Plan Usage</CardTitle>
         <CardDescription>Your current Pro plan usage and limits</CardDescription>
@@ -53,7 +53,7 @@ export function PlanTracker({ className, ...props }: PlanTrackerProps) {
           <Progress value={(queriesUsed / queriesLimit) * 100} className="h-2 bg-muted" />
         </div>
 
-        <Button className="w-full gap-2 bg-violet-600 hover:bg-violet-700">
+        <Button className="w-full gap-2 bg-violet-600 hover:bg-violet-700 active:scale-95 transition-transform">
           <CreditCard className="h-4 w-4" />
           Upgrade Plan
         </Button>
