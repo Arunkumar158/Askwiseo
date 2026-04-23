@@ -18,40 +18,13 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 import { SidebarToggle } from "@/components/sidebar-toggle"
-import { NotificationButton } from "@/components/notifications/notification-button"
-import { NotificationType } from "@/lib/types/notification"
+
 import { signOut } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { toast } from "sonner"
 import { useAuth } from "@/contexts/AuthContext"
 
-// Example notifications data - replace with your actual data
-const notifications = [
-  {
-    id: "1",
-    type: "info" as NotificationType,
-    title: "New AI Model Available",
-    description: "We've added support for GPT-4 in your workspace",
-    timestamp: new Date(),
-    read: false,
-  },
-  {
-    id: "2",
-    type: "success" as NotificationType,
-    title: "Training Complete",
-    description: "Your custom model has finished training",
-    timestamp: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-    read: false,
-  },
-  {
-    id: "3",
-    type: "warning" as NotificationType,
-    title: "Storage Space Low",
-    description: "You have less than 10% storage space remaining",
-    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-    read: true,
-  },
-];
+
 
 export function Header() {
   const router = useRouter()
@@ -81,7 +54,7 @@ export function Header() {
             </Button>
           </div>
           <ThemeToggle />
-          <NotificationButton notifications={notifications} />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">

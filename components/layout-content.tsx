@@ -23,7 +23,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
   // since they have their own SiteHeader/SiteFooter in their layout
   if (isPublicPage) {
     return (
-      <div className="flex min-h-screen flex-col md:flex-row">
+      <div className="flex w-full min-h-screen flex-col md:flex-row">
         <AppSidebar />
         <div className="flex-1 flex flex-col min-h-screen">
           {children}
@@ -33,7 +33,7 @@ export function LayoutContent({ children }: LayoutContentProps) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex w-full min-h-screen flex-col md:flex-row">
       <AppSidebar />
       <div className="flex-1 flex flex-col min-h-screen">
         <Header />

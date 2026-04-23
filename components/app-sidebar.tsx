@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Upload, Search, BarChart2, CreditCard, Settings, ChevronDown, User2, Mail } from "lucide-react"
+import { Home, Upload, Search, BarChart2, Settings, ChevronDown, User2 } from "lucide-react"
 
 import {
   Sidebar,
@@ -37,16 +37,7 @@ const items = [
     url: "/insights",
     icon: BarChart2,
   },
-  {
-    title: "Pricing",
-    url: "/pricing",
-    icon: CreditCard,
-  },
-  {
-    title: "Contact",
-    url: "/contact",
-    icon: Mail,
-  },
+
   {
     title: "Settings",
     url: "/settings",
