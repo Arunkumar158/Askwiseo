@@ -16,7 +16,8 @@ import {
   Plus,
   Bot,
   Loader2,
-  Menu
+  Menu,
+  Mic
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -172,6 +173,9 @@ export default function InsightsPage() {
       setChatHistory(prev => [...prev, newInsight])
       setCurrentInsight(newInsight)
       setQuestion("")
+      if (questionInputRef.current) {
+        questionInputRef.current.style.height = "auto"
+      }
       setIsLoading(false)
       
       // Scroll to the answer
@@ -220,8 +224,8 @@ export default function InsightsPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
-      <div className="flex flex-1 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-4rem)] px-8 py-6 max-h-screen">
+      <div className="flex flex-1 overflow-hidden gap-8 relative">
         {/* Mobile Sidebar Toggle */}
         <Button
           variant="ghost"
@@ -234,27 +238,27 @@ export default function InsightsPage() {
 
         {/* Left Sidebar - PDF List */}
         <div className={cn(
-          "fixed md:static inset-0 z-40 w-full md:w-80 border-r bg-background transform transition-transform duration-200 ease-in-out",
+          "fixed md:static inset-0 z-40 flex flex-col overflow-hidden w-full md:w-[35%] lg:w-[40%] max-w-md rounded-xl border bg-card shadow-sm transform transition-transform duration-200 ease-in-out",
           !isSidebarOpen && "-translate-x-full md:translate-x-0"
         )}>
-          <div className="p-4 border-b">
-            <div className="relative">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <div className="p-4 border-b shrink-0">
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search PDFs..."
-                className="pl-8"
+                className="pl-9 w-full"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
-          <ScrollArea className="h-[calc(100vh-12rem)]">
-            <div className="p-4 space-y-4">
+          <ScrollArea className="flex-1">
+            <div className="p-4 flex flex-col gap-4">
               {filteredPdfs.map((pdf) => (
                 <div
                   key={pdf.id}
                   className={cn(
-                    "flex items-start gap-3 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors",
+                    "flex items-start gap-3 p-3 rounded-lg hover:bg-accent cursor-pointer transition-colors text-left",
                     selectedPdf?.id === pdf.id && "bg-accent"
                   )}
                   onClick={() => {
@@ -281,7 +285,7 @@ export default function InsightsPage() {
               ))}
             </div>
           </ScrollArea>
-          <div className="p-4 border-t">
+          <div className="p-4 border-t shrink-0">
             <Button className="w-full gap-2" onClick={handleFileUpload}>
               <Upload className="h-4 w-4" />
               Upload PDF
@@ -298,9 +302,9 @@ export default function InsightsPage() {
         )}
         
         {/* Right Main Panel - AI Insight Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden rounded-xl border bg-card shadow-sm relative z-10">
           {/* View Mode Toggle */}
-          <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b gap-4">
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b gap-4 shrink-0">
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <Button 
                 variant={viewMode === "chat" ? "default" : "ghost"} 
@@ -330,11 +334,11 @@ export default function InsightsPage() {
           </div>
           
           {/* Chat Area */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 flex flex-col overflow-hidden relative">
             {viewMode === "chat" ? (
-              <div className="flex flex-col h-full">
-                <ScrollArea ref={chatContainerRef} className="flex-1 p-4">
-                  <div className="space-y-6">
+              <div className="flex flex-col h-full w-full mx-auto relative">
+                <ScrollArea ref={chatContainerRef} className="flex-1 w-full">
+                  <div className="space-y-6 max-w-3xl mx-auto p-4 w-full">
                     {chatHistory.map((insight) => (
                       <div key={insight.id} className="space-y-4">
                         {/* Question */}
@@ -415,25 +419,55 @@ export default function InsightsPage() {
                 </ScrollArea>
                 
                 {/* Question Input */}
-                <div className="p-4 border-t">
-                  <div className="relative">
+                <div className="px-4 pb-8 pt-4 w-full shrink-0 flex justify-center z-20">
+                  <div 
+                    className={cn(
+                      "relative w-full max-w-3xl flex items-end gap-2 p-1.5 rounded-[32px] border border-border/60 bg-muted/30 shadow-sm transition-all duration-300",
+                      "focus-within:ring-2 focus-within:ring-primary/20 focus-within:shadow-md focus-within:bg-card focus-within:border-primary/40"
+                    )}
+                  >
                     <Textarea
                       ref={questionInputRef}
                       placeholder="Ask a question about your documents..."
-                      className="pr-12 resize-none"
-                      rows={3}
+                      className="flex-1 min-h-[48px] max-h-[240px] resize-none border-0 bg-transparent focus-visible:ring-0 shadow-none py-3.5 px-5 placeholder:text-muted-foreground/60 text-[15px] leading-relaxed scrollbar-thin"
+                      rows={1}
                       value={question}
-                      onChange={(e) => setQuestion(e.target.value)}
+                      onChange={(e) => {
+                        setQuestion(e.target.value)
+                        e.target.style.height = "auto"
+                        e.target.style.height = e.target.scrollHeight + "px"
+                      }}
                       onKeyDown={handleKeyPress}
                     />
-                    <Button
-                      size="icon"
-                      className="absolute right-2 bottom-2"
-                      onClick={handleSubmitQuestion}
-                      disabled={!question.trim() || isLoading}
-                    >
-                      <Send className="h-4 w-4" />
-                    </Button>
+                    
+                    <div className="mb-1 mr-1 relative flex items-center justify-center w-[40px] h-[40px] shrink-0">
+                      <div className={cn(
+                        "absolute inset-0 transition-all duration-300 ease-out", 
+                        question.trim().length > 0 ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-50 translate-y-4 pointer-events-none"
+                      )}>
+                        <Button
+                          size="icon"
+                          className="h-full w-full rounded-full bg-primary text-primary-foreground shadow-sm hover:bg-primary/90"
+                          onClick={handleSubmitQuestion}
+                          disabled={isLoading}
+                        >
+                          <Send className="h-4 w-4 ml-0.5" />
+                        </Button>
+                      </div>
+                      
+                      <div className={cn(
+                        "absolute inset-0 transition-all duration-300 ease-out",
+                        question.trim().length === 0 ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-50 -translate-y-4 pointer-events-none"
+                      )}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-full w-full rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
+                        >
+                          <Mic className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

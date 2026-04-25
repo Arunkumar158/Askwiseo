@@ -76,20 +76,20 @@ export function AppSidebar() {
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
-                <Link href={item.url} className="transition-all duration-200">
-                  <item.icon />
-                  <span>{item.title}</span>
+                <Link href={item.url} className="flex items-center gap-3 transition-all duration-200">
+                  <item.icon className="h-4 w-4" />
+                  <span className="font-medium">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-4">
-        <Button variant="outline" className="w-full justify-start gap-2">
+      <SidebarFooter className="p-4 mt-auto">
+        <Button variant="outline" className="w-full flex items-center justify-start gap-3 rounded-lg h-12">
           <User2 className="h-4 w-4" />
-          <span>Profile</span>
-          <ChevronDown className="ml-auto h-4 w-4" />
+          <span className="font-medium">Profile</span>
+          <ChevronDown className="ml-auto h-4 w-4 text-muted-foreground" />
         </Button>
       </SidebarFooter>
     </Sidebar>
