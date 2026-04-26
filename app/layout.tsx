@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/site-footer"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "@/components/ui/sonner"
+import { Toaster as HotToaster } from "react-hot-toast"
 import { FeedbackButton } from "@/components/feedback-button"
 import { LayoutContent } from "../components/layout-content"
 import { AuthProvider } from "@/contexts/AuthContext"
@@ -80,6 +81,7 @@ export default function RootLayout({
               <FeedbackButton />
             </SidebarProvider>
             <Toaster />
+            <HotToaster position="top-center" />
           </ThemeProvider>
         </AuthProvider>
       </body>

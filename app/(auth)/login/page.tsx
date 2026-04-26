@@ -9,35 +9,22 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Loader2, Eye, EyeOff, BookOpen } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import toast from "react-hot-toast"
 
-export default function SignupPage() {
-  const [name, setName] = useState("")
+export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   
-  const { signUp, signInWithGoogle } = useAuth()
+  const { signIn, signInWithGoogle } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (password !== confirmPassword) {
-      toast.error("Passwords do not match")
-      return
-    }
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters")
-      return
-    }
-
     setIsLoading(true)
     try {
-      await signUp(email, password)
-      // Note: we're not currently saving the name to Firebase in signUp
+      await signIn(email, password)
       router.push("/")
     } catch (error) {
       // Error is handled in context
@@ -67,25 +54,13 @@ export default function SignupPage() {
       
       <Card className="w-full border-slate-800 bg-slate-900/50 shadow-[0_0_15px_rgba(26,86,219,0.1)] backdrop-blur-sm">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl text-center">Create an account</CardTitle>
+          <CardTitle className="text-2xl text-center">Welcome back</CardTitle>
           <CardDescription className="text-center text-slate-400">
-            Enter your information to get started
+            Enter your email to sign in to your account
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-slate-200">Full Name</Label>
-              <Input 
-                id="name" 
-                type="text" 
-                placeholder="John Doe" 
-                required 
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-slate-200 placeholder:text-slate-500 focus-visible:ring-[#1A56DB]"
-              />
-            </div>
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-200">Email</Label>
               <Input 
@@ -99,7 +74,12 @@ export default function SignupPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-200">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-slate-200">Password</Label>
+                <Link href="/forgot-password" className="text-sm font-medium text-[#1A56DB] hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <div className="relative">
                 <Input 
                   id="password" 
@@ -118,19 +98,8 @@ export default function SignupPage() {
                 </button>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-slate-200">Confirm Password</Label>
-              <Input 
-                id="confirmPassword" 
-                type={showPassword ? "text" : "password"} 
-                required 
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-slate-200 focus-visible:ring-[#1A56DB]"
-              />
-            </div>
             <Button type="submit" className="w-full bg-[#1A56DB] hover:bg-[#1A56DB]/90 text-white" disabled={isLoading}>
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Account"}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sign In"}
             </Button>
           </form>
           
@@ -165,9 +134,9 @@ export default function SignupPage() {
         </CardContent>
         <CardFooter className="flex justify-center border-t border-slate-800/50 pt-4 pb-6">
           <div className="text-sm text-slate-400">
-            Already have an account?{" "}
-            <Link href="/login" className="text-[#1A56DB] hover:underline font-medium">
-              Sign in
+            Don't have an account?{" "}
+            <Link href="/signup" className="text-[#1A56DB] hover:underline font-medium">
+              Create one
             </Link>
           </div>
         </CardFooter>

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation"
 import { Header } from "@/components/header"
 import { SiteFooter } from "@/components/site-footer"
 import { AppSidebar } from "@/components/app-sidebar"
+import ProtectedRoute from "@/components/ProtectedRoute"
 
 interface LayoutContentProps {
   children: React.ReactNode
@@ -11,8 +12,8 @@ interface LayoutContentProps {
 
 export function LayoutContent({ children }: LayoutContentProps) {
   const pathname = usePathname()
-  const isAuthPage = pathname === "/signin" || pathname === "/signup"
-  const isPublicPage = pathname === "/pricing" || pathname === "/contact"
+  const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password"
+  const isPublicPage = pathname === "/pricing" || pathname === "/contact" || pathname === "/"
 
   // Auth pages bypass the entire app shell
   if (isAuthPage) {
@@ -33,15 +34,17 @@ export function LayoutContent({ children }: LayoutContentProps) {
   }
 
   return (
-    <div className="flex w-full min-h-screen flex-col md:flex-row">
-      <AppSidebar />
-      <div className="flex-1 flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 pt-16">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
-        </main>
-        <SiteFooter />
+    <ProtectedRoute>
+      <div className="flex w-full min-h-screen flex-col md:flex-row">
+        <AppSidebar />
+        <div className="flex-1 flex flex-col min-h-screen">
+          <Header />
+          <main className="flex-1 pt-16">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
+          </main>
+          <SiteFooter />
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   )
 } 
