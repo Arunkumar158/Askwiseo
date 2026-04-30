@@ -1,44 +1,27 @@
 "use client"
 
 import type React from "react"
-import { useState, useRef } from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, FileText } from "lucide-react"
+import { Upload, FileText, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { uploadPDF, UploadProgress } from "@/utils/uploadPDF"
-import { Progress } from "@/components/ui/progress"
+import { useDocuments } from "@/hooks/useDocuments"
+import { useDropzone } from "react-dropzone"
 
 interface UploadSectionProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function UploadSection({ className, ...props }: UploadSectionProps) {
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress>({ progress: 0, status: 'success' });
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
+  const { upload, uploading, uploadProgress } = useDocuments()
+  const router = useRouter()
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    await uploadPDF(file, setUploadProgress);
-  };
-
-  const handleBrowseLibrary = () => {
-    router.push('/uploads');
-  };
-
-  const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files?.[0];
-    if (!file) return;
-
-    await uploadPDF(file, setUploadProgress);
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: { "application/pdf": [".pdf"] },
+    maxFiles: 1,
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles[0]) upload(acceptedFiles[0])
+    },
+  })
 
   return (
     <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
@@ -48,49 +31,47 @@ export function UploadSection({ className, ...props }: UploadSectionProps) {
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center justify-center gap-4">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            accept=".pdf"
-            className="hidden"
-          />
           <div
-            className="flex h-[180px] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/25 bg-muted/50 px-4 py-8 text-center transition-colors hover:border-violet-300 hover:bg-muted"
-            onClick={() => fileInputRef.current?.click()}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
+            {...getRootProps()}
+            className={cn(
+              "flex h-[180px] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/25 bg-muted/50 px-4 py-8 text-center transition-colors hover:border-violet-300 hover:bg-muted",
+              isDragActive && "border-violet-400 bg-violet-50/10"
+            )}
           >
+            <input {...getInputProps()} />
             <div className="flex flex-col items-center justify-center gap-2">
               <div className="rounded-full bg-violet-100 p-3">
-                <Upload className="h-6 w-6 text-violet-600" />
+                {uploading
+                  ? <Loader2 className="h-6 w-6 text-violet-600 animate-spin" />
+                  : <Upload className="h-6 w-6 text-violet-600" />
+                }
               </div>
               <div className="flex flex-col gap-1">
-                <p className="font-medium">Drag & drop PDFs here or click to browse</p>
-                <p className="text-sm text-muted-foreground">Support for PDF files up to 50MB</p>
+                {uploading ? (
+                  <p className="font-medium text-violet-600">{uploadProgress}</p>
+                ) : (
+                  <>
+                    <p className="font-medium">Drag & drop PDFs here or click to browse</p>
+                    <p className="text-sm text-muted-foreground">Support for PDF files up to 50MB</p>
+                  </>
+                )}
               </div>
             </div>
           </div>
-          {uploadProgress.status === 'uploading' && (
-            <div className="w-full">
-              <Progress value={uploadProgress.progress} className="h-2" />
-              <p className="mt-2 text-sm text-muted-foreground text-center">
-                Uploading... {Math.round(uploadProgress.progress)}%
-              </p>
-            </div>
-          )}
+
           <div className="flex w-full flex-col sm:flex-row gap-2">
-            <Button 
+            <Button
               className="w-full gap-2 bg-violet-600 hover:bg-violet-700 active:scale-95 transition-transform"
-              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
             >
               <FileText className="h-4 w-4" />
-              Select Files
+              {uploading ? "Uploading..." : "Select Files"}
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full active:scale-95 transition-transform"
-              onClick={handleBrowseLibrary}
+              onClick={() => router.push("/uploads")}
             >
               Browse Library
             </Button>

@@ -1,44 +1,21 @@
-import type React from "react"
-import { cn } from "@/lib/utils"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { MoreHorizontal, FileText } from "lucide-react"
+"use client";
+
+import { cn } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MoreHorizontal, FileText, Loader2 } from "lucide-react";
+import { useDocuments } from "@/hooks/useDocuments";
+import { useRouter } from "next/navigation";
+import type React from "react";
 
 interface RecentDocumentsProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-const documents = [
-  {
-    id: 1,
-    name: "Annual Report 2023.pdf",
-    date: "2023-12-15",
-    status: "indexed",
-    pages: 24,
-  },
-  {
-    id: 2,
-    name: "Product Specifications.pdf",
-    date: "2023-12-10",
-    status: "indexed",
-    pages: 12,
-  },
-  {
-    id: 3,
-    name: "Market Research.pdf",
-    date: "2023-12-05",
-    status: "processing",
-    pages: 45,
-  },
-  {
-    id: 4,
-    name: "Financial Analysis Q4.pdf",
-    date: "2023-11-28",
-    status: "indexed",
-    pages: 18,
-  },
-]
-
 export function RecentDocuments({ className, ...props }: RecentDocumentsProps) {
+  const { documents, loading, formatFileSize } = useDocuments();
+  const router = useRouter();
+  const recent = documents.slice(0, 4);
+
   return (
     <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -48,41 +25,50 @@ export function RecentDocuments({ className, ...props }: RecentDocumentsProps) {
         </div>
         <Button variant="ghost" size="icon">
           <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">More options</span>
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {documents.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors duration-150 hover:bg-muted/50">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-violet-100">
-                  <FileText className="h-5 w-5 text-violet-600" />
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : recent.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground text-sm">
+            No documents yet. Upload your first PDF!
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {recent.map((doc) => (
+              <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors duration-150 hover:bg-muted/50">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-violet-100">
+                    <FileText className="h-5 w-5 text-violet-600" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{doc.filename}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(doc.created_at).toLocaleDateString()} • {doc.page_count} pages • {formatFileSize(doc.file_size_bytes)}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{doc.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Added on {new Date(doc.date).toLocaleDateString()} • {doc.pages} pages
-                  </p>
-                </div>
+                <Badge
+                  variant={doc.status === "ready" ? "outline" : "secondary"}
+                  className={cn(
+                    doc.status === "ready"
+                      ? "bg-green-50 text-green-700 hover:bg-green-50"
+                      : "bg-amber-50 text-amber-700 hover:bg-amber-50"
+                  )}
+                >
+                  {doc.status === "ready" ? "Indexed" : "Processing"}
+                </Badge>
               </div>
-              <Badge
-                variant={doc.status === "indexed" ? "outline" : "secondary"}
-                className={cn(
-                  doc.status === "indexed"
-                    ? "bg-green-50 text-green-700 hover:bg-green-50"
-                    : "bg-amber-50 text-amber-700 hover:bg-amber-50",
-                )}
-              >
-                {doc.status === "indexed" ? "Indexed" : "Processing"}
-              </Badge>
-            </div>
-          ))}
-          <Button variant="outline" className="w-full">
-            View All Documents
-          </Button>
-        </div>
+            ))}
+            <Button variant="outline" className="w-full" onClick={() => router.push("/uploads")}>
+              View All Documents
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,125 +1,72 @@
-"use client"
+"use client";
 
-import { createContext, useContext, useEffect, useState } from "react"
-import { 
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
   User,
+  onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
+  signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  sendPasswordResetEmail
-} from "firebase/auth"
-import { auth } from "@/lib/firebase"
-import toast from "react-hot-toast"
+  sendPasswordResetEmail,
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 interface AuthContextType {
-  user: User | null
-  loading: boolean
-  signIn: (email: string, password: string) => Promise<void>
-  signUp: (email: string, password: string) => Promise<void>
-  signInWithGoogle: () => Promise<void>
-  resetPassword: (email: string) => Promise<void>
-  handleLogout: () => Promise<void>
-  logOut: () => Promise<void>
+  user: User | null;
+  loading: boolean;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  logOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | null>(null);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser)
-      setLoading(false)
-      
-      if (currentUser) {
-        // Sync token to cookie for Next.js Middleware
-        const token = await currentUser.getIdToken()
-        document.cookie = `auth-token=${token}; path=/; max-age=3600` // 1 hour
-      } else {
-        document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-      }
-    })
-
-    return () => unsubscribe()
-  }, [])
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
 
   const signIn = async (email: string, password: string) => {
-    try {
-      await signInWithEmailAndPassword(auth, email, password)
-      toast.success("Signed in successfully")
-    } catch (error) {
-      toast.error("Invalid email or password")
-      throw error
-    }
-  }
+    await signInWithEmailAndPassword(auth, email, password);
+  };
 
   const signUp = async (email: string, password: string) => {
-    try {
-      await createUserWithEmailAndPassword(auth, email, password)
-      toast.success("Account created successfully")
-    } catch (error) {
-      toast.error("Failed to create account")
-      throw error
-    }
-  }
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
 
   const signInWithGoogle = async () => {
-    try {
-      const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
-      toast.success("Signed in with Google successfully")
-    } catch (error) {
-      toast.error("Failed to sign in with Google")
-      throw error
-    }
-  }
-
-  const resetPassword = async (email: string) => {
-    try {
-      await sendPasswordResetEmail(auth, email)
-      toast.success("Password reset email sent")
-    } catch (error) {
-      toast.error("Failed to send reset email")
-      throw error
-    }
-  }
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  };
 
   const logOut = async () => {
-    try {
-      await firebaseSignOut(auth)
-      document.cookie = "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-      toast.success("Signed out successfully")
-    } catch (error) {
-      toast.error("Failed to sign out")
-      throw error
-    }
-  }
+    await signOut(auth);
+  };
+
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      signIn, 
-      signUp, 
-      signInWithGoogle, 
-      resetPassword, 
-      handleLogout: logOut,
-      logOut
-    }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, logOut, resetPassword }}>
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
-  }
-  return context
-} 
+export function useAuth(): AuthContextType {
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>");
+  return ctx;
+}
