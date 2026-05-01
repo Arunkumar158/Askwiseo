@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onIdTokenChanged, signOut } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
@@ -13,9 +13,16 @@ export function useAuth() {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onIdTokenChanged(auth, async (user) => {
       console.log("Auth state changed:", user ? "User logged in" : "User logged out");
-      setUser(user);
+      if (user) {
+        const token = await user.getIdToken();
+        document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax`;
+        setUser(user);
+      } else {
+        document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax`;
+        setUser(null);
+      }
       setLoading(false);
     });
 
@@ -38,10 +45,10 @@ export function useAuth() {
         });
       }
       toast.success("Logged out successfully");
-      router.push("/auth");
+      router.push("/login");
     } catch (error) {
       toast.error("Failed to logout. Please try again.");
-      router.push("/auth"); // Always redirect even if error
+      router.push("/login"); // Always redirect even if error
     }
   };
 

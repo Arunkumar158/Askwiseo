@@ -26,9 +26,10 @@ def create_document_record(user_id, filename, page_count, chunk_count, file_size
 
 def get_user_documents(user_id: str):
     db = get_db()
-    docs = (db.collection("documents").where("user_id", "==", user_id)
-            .order_by("created_at", direction=firestore.Query.DESCENDING).stream())
-    return [doc.to_dict() for doc in docs]
+    docs = db.collection("documents").where("user_id", "==", user_id).stream()
+    doc_list = [doc.to_dict() for doc in docs]
+    # Sort by created_at descending in Python to avoid needing a composite index
+    return sorted(doc_list, key=lambda x: x.get("created_at", ""), reverse=True)
 
 def get_document(document_id: str, user_id: str):
     db = get_db()
@@ -62,6 +63,14 @@ def get_chat_history(user_id: str, document_id=None, limit: int = 20):
     query = db.collection("chat_history").where("user_id", "==", user_id)
     if document_id:
         query = query.where("document_id", "==", document_id)
-    chats = (query.order_by("created_at", direction=firestore.Query.DESCENDING)
-             .limit(limit).stream())
-    return list(reversed([c.to_dict() for c in chats]))
+    
+    # We fetch without order_by to avoid composite index requirements
+    # Then sort and limit in Python
+    chats_data = query.stream()
+    chat_list = [c.to_dict() for c in chats_data]
+    
+    # Sort by created_at descending
+    sorted_chats = sorted(chat_list, key=lambda x: x.get("created_at", ""), reverse=True)
+    
+    # Take the limit and then reverse back for chronological order in UI
+    return list(reversed(sorted_chats[:limit]))

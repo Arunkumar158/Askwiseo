@@ -5,6 +5,7 @@ import { Header } from "@/components/header"
 import { SiteFooter } from "@/components/site-footer"
 import { AppSidebar } from "@/components/app-sidebar"
 import ProtectedRoute from "@/components/ProtectedRoute"
+import { SidebarToggle } from "@/components/sidebar-toggle"
 
 interface LayoutContentProps {
   children: React.ReactNode
@@ -26,7 +27,11 @@ export function LayoutContent({ children }: LayoutContentProps) {
     return (
       <div className="flex w-full min-h-screen flex-col md:flex-row">
         <AppSidebar />
-        <div className="flex-1 flex flex-col min-h-screen">
+        <div className="flex-1 flex flex-col min-h-screen relative">
+          {/* Mobile floating toggle for public pages without headers */}
+          <div className="md:hidden fixed top-4 left-4 z-50">
+            <SidebarToggle />
+          </div>
           {children}
         </div>
       </div>
