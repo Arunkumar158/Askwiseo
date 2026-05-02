@@ -44,10 +44,16 @@ export interface ChatResult {
 }
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Not authenticated");
-    const token = await user.getIdToken();
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Please sign in to continue");
+  }
+  try {
+    const token = await user.getIdToken(true); // force refresh
     return { Authorization: `Bearer ${token}` };
+  } catch (error) {
+    throw new Error("Authentication failed. Please sign in again.");
+  }
 }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {

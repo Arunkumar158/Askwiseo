@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { listDocuments, uploadDocument, deleteDocument, Document, formatFileSize } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { auth } from "@/lib/firebase";
 import toast from "react-hot-toast";
 
 export function useDocuments() {
@@ -12,6 +13,14 @@ export function useDocuments() {
 
     const fetchDocuments = useCallback(async () => {
         if (!user) return;
+
+        // Check if user token is available before fetching
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) {
+            toast.error("Please sign in again");
+            return;
+        }
+
         setLoading(true);
         try {
             const { documents } = await listDocuments();

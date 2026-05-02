@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Search, Filter, BookOpen, Star, Clock, Tag, Send, Loader2, FileText } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import { useDocuments } from "@/hooks/useDocuments";
 import ReactMarkdown from "react-markdown";
 
 export default function SearchPage() {
+  const router = useRouter();
   const [input, setInput] = useState("");
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>(undefined);
   const { messages, loading, sendMessage, loadHistory } = useChat(selectedDocId);
@@ -84,7 +86,14 @@ export default function SearchPage() {
 
               {/* Messages */}
               <ScrollArea className="flex-1 p-4">
-                {messages.length === 0 && (
+                {documents.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-16">
+                    <FileText className="h-12 w-12 mb-4 opacity-30" />
+                    <p className="text-lg font-medium">No documents uploaded yet</p>
+                    <p className="text-sm mt-1 mb-4">Upload PDFs first, then ask questions here</p>
+                    <Button onClick={() => router.push("/uploads")}>Upload PDFs</Button>
+                  </div>
+                ) : messages.length === 0 && (
                   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-16">
                     <Search className="h-12 w-12 mb-4 opacity-30" />
                     <p className="text-lg font-medium">Ask anything about your documents</p>

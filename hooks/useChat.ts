@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { sendChatMessage, getChatHistory, ChatSource } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
+import { auth } from "@/lib/firebase";
 import toast from "react-hot-toast";
 
 export interface LocalMessage {
@@ -37,6 +38,13 @@ export function useChat(documentId?: string) {
         if (!user) { toast.error("Please sign in"); return; }
         if (!question.trim() || loading) return;
 
+        // Check if user token is available before sending
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) {
+            toast.error("Please sign in again");
+            return;
+        }
+
         const userMsg: LocalMessage = {
             id: `user-${Date.now()}`,
             role: "user",
@@ -66,8 +74,13 @@ export function useChat(documentId?: string) {
             };
             setMessages((prev) => [...prev.filter((m) => !m.isLoading), assistantMsg]);
         } catch (err: any) {
-            setMessages((prev) => prev.filter((m) => !m.isLoading));
-            toast.error(err.message || "Failed to get a response");
+            const errorMsg: LocalMessage = {
+                id: `error-${Date.now()}`,
+                role: "assistant",
+                content: `Error: ${err.message || "Failed to get a response"}`,
+                timestamp: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev.filter((m) => !m.isLoading), errorMsg]);
         } finally {
             setLoading(false);
         }

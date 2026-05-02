@@ -26,7 +26,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
         )
     id_token = authorization.split("Bearer ")[1]
     try:
-        decoded = firebase_auth.verify_id_token(id_token)
+        decoded = firebase_auth.verify_id_token(id_token, clock_skew_seconds=60)
         return decoded
     except firebase_admin.exceptions.FirebaseError as e:
         raise HTTPException(
