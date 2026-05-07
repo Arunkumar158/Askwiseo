@@ -10,8 +10,8 @@ class Settings(BaseSettings):
     MAX_FILE_SIZE_MB: int = 50
     CHUNK_SIZE: int = 1000
     CHUNK_OVERLAP: int = 200
-    EMBEDDING_MODEL: str = "models/text-embedding-004"
-    CHAT_MODEL: str = "gemini-1.5-flash"
+    EMBEDDING_MODEL: str = "models/gemini-embedding-2"
+    CHAT_MODEL: str = "gemini-2.5-flash"
     MAX_RETRIEVED_CHUNKS: int = 5
 
     class Config:

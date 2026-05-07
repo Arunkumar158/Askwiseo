@@ -12,6 +12,10 @@ export interface Document {
     status: "ready" | "processing" | "error";
     created_at: string;
     updated_at: string;
+    summary?: string;
+    key_topics?: string[];
+    document_type?: string;
+    action_items?: string[];
 }
 
 export interface ChatSource {
@@ -44,16 +48,16 @@ export interface ChatResult {
 }
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("Please sign in to continue");
-  }
-  try {
-    const token = await user.getIdToken(true); // force refresh
-    return { Authorization: `Bearer ${token}` };
-  } catch (error) {
-    throw new Error("Authentication failed. Please sign in again.");
-  }
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error("Please sign in to continue");
+    }
+    try {
+        const token = await user.getIdToken(true); // force refresh
+        return { Authorization: `Bearer ${token}` };
+    } catch (error) {
+        throw new Error("Authentication failed. Please sign in again.");
+    }
 }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {

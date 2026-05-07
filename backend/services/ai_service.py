@@ -60,3 +60,4 @@ def generate_answer(question: str, user_id: str, document_id=None, chat_history=
     ]
 
     return {"answer": answer, "sources": sources}
+    
