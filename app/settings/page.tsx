@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  User,
+  User as UserIcon,
   Lock,
   FileText,
   CreditCard,
@@ -34,7 +34,21 @@ import {
   X,
   Eye,
   EyeOff,
+  LogOut,
 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useDocuments } from "@/hooks/useDocuments";
+import { 
+  updateProfile, 
+  updatePassword, 
+  deleteUser, 
+  EmailAuthProvider, 
+  reauthenticateWithCredential 
+} from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 // Types
 interface StorageUsage {
@@ -50,6 +64,10 @@ interface Invoice {
 }
 
 export default function SettingsPage() {
+  const { user, logOut } = useAuth();
+  const { documents, formatFileSize } = useDocuments();
+  const router = useRouter();
+
   // State with localStorage persistence
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -95,23 +113,29 @@ export default function SettingsPage() {
   });
 
   // Form states
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState(user?.displayName || '');
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
   const [apiKey, setApiKey] = useState('••••••••••••••••');
   const [feedback, setFeedback] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Mock data
-  const [storageUsage] = useState<StorageUsage>({
-    used: 4,
-    total: 10,
-    unit: 'PDFs'
-  });
+  // Sync name when user object is loaded
+  useEffect(() => {
+    if (user?.displayName) setName(user.displayName);
+  }, [user]);
 
-  const [recentInvoices] = useState<Invoice[]>([
-    { id: '1234', amount: 29.00, date: 'March 1, 2024' },
-    { id: '1233', amount: 29.00, date: 'February 1, 2024' },
-  ]);
+  // Real data calculations
+  const totalUsedSize = documents.reduce((acc, doc) => acc + (doc.file_size_bytes || 0), 0);
+  const storageUsage = {
+    used: documents.length,
+    total: 10, // Example limit, could be dynamic
+    unit: 'PDFs',
+    sizeUsed: formatFileSize(totalUsedSize)
+  };
 
   // Persist state changes to localStorage
   useEffect(() => {
@@ -155,6 +179,65 @@ export default function SettingsPage() {
     console.log('Slack integration:', !slack ? 'enabled' : 'disabled');
   };
 
+  // Real Auth Handlers
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      await updateProfile(user, { displayName: name });
+      toast.success("Profile updated successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await logOut();
+      toast.success("Signed out successfully");
+      router.push("/");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to sign out");
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!user || !user.email) return;
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+
+    try {
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+      toast.success("Password updated successfully");
+      setShowChangePasswordDialog(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update password. Check your current password.");
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || !user.email) return;
+    
+    try {
+      const credential = EmailAuthProvider.credential(user.email, deleteConfirmPassword);
+      await reauthenticateWithCredential(user, credential);
+      await deleteUser(user);
+      toast.success("Account deleted successfully");
+      router.push("/");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to delete account. Check your password.");
+    }
+  };
+
   // Confirmation dialogs
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [showClearDataDialog, setShowClearDataDialog] = useState(false);
@@ -168,31 +251,60 @@ export default function SettingsPage() {
         {/* Account Info */}
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-white">
-              <User className="w-5 h-5" />
-              Account Information
+            <CardTitle className="flex items-center justify-between text-white">
+              <div className="flex items-center gap-2">
+                <UserIcon className="w-5 h-5" />
+                Account Information
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-gray-400 hover:text-white"
+                onClick={handleSignOut}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center">
-                <User className="w-10 h-10 text-gray-400" />
+              <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-gray-800">
+                {user?.photoURL ? (
+                  <Image 
+                    src={user.photoURL} 
+                    alt={user.displayName || "User"} 
+                    width={80} 
+                    height={80} 
+                    className="object-cover"
+                  />
+                ) : (
+                  <UserIcon className="w-10 h-10 text-gray-400" />
+                )}
               </div>
-              <div className="flex-1 w-full">
+              <div className="flex-1 w-full space-y-2">
                 <Input
                   placeholder="Your Name"
                   className="bg-gray-800 border-gray-700 text-white"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
+                <Button 
+                  onClick={handleSaveProfile} 
+                  disabled={isSaving || name === user?.displayName}
+                  className="w-full sm:w-auto"
+                >
+                  {isSaving ? "Saving..." : "Save Profile"}
+                </Button>
               </div>
             </div>
             <Input
               type="email"
               placeholder="Email"
-              className="bg-gray-800 border-gray-700 text-white"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              className="bg-gray-800 border-gray-700 text-gray-400 cursor-not-allowed"
+              value={user?.email || ''}
+              disabled
+              readOnly
             />
             <div className="flex flex-col sm:flex-row gap-4">
               <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
@@ -206,7 +318,7 @@ export default function SettingsPage() {
                   <DialogHeader>
                     <DialogTitle className="text-white">Change Password</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                      Enter your current and new password
+                      Enter your current and new password to update.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
@@ -214,23 +326,29 @@ export default function SettingsPage() {
                       type="password"
                       placeholder="Current Password"
                       className="bg-gray-800 border-gray-700 text-white"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
                     />
                     <Input
                       type="password"
                       placeholder="New Password"
                       className="bg-gray-800 border-gray-700 text-white"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
                     />
                     <Input
                       type="password"
                       placeholder="Confirm New Password"
                       className="bg-gray-800 border-gray-700 text-white"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setShowChangePasswordDialog(false)}>
                       Cancel
                     </Button>
-                    <Button>Save Changes</Button>
+                    <Button onClick={handleChangePassword}>Save Changes</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -246,14 +364,24 @@ export default function SettingsPage() {
                   <DialogHeader>
                     <DialogTitle className="text-white">Delete Account</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                      This action cannot be undone. All your data will be permanently deleted.
+                      This action cannot be undone. All your data will be permanently deleted. 
+                      Please enter your password to confirm.
                     </DialogDescription>
                   </DialogHeader>
+                  <div className="py-4">
+                    <Input
+                      type="password"
+                      placeholder="Your Password"
+                      className="bg-gray-800 border-gray-700 text-white"
+                      value={deleteConfirmPassword}
+                      onChange={(e) => setDeleteConfirmPassword(e.target.value)}
+                    />
+                  </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setShowDeleteAccountDialog(false)}>
                       Cancel
                     </Button>
-                    <Button variant="destructive">Delete Account</Button>
+                    <Button variant="destructive" onClick={handleDeleteAccount}>Delete Account</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -283,12 +411,17 @@ export default function SettingsPage() {
               <div className="w-full bg-gray-700 rounded-full h-2.5 mt-2">
                 <div 
                   className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
-                  style={{ width: `${(storageUsage.used / storageUsage.total) * 100}%` }}
+                  style={{ width: `${Math.min((storageUsage.used / storageUsage.total) * 100, 100)}%` }}
                 ></div>
               </div>
-              <p className="text-sm text-gray-400 mt-1">
-                {storageUsage.used}/{storageUsage.total} {storageUsage.unit} used
-              </p>
+              <div className="flex justify-between items-center mt-2">
+                <p className="text-sm text-gray-400">
+                  {storageUsage.used} / {storageUsage.total} {storageUsage.unit} used
+                </p>
+                <p className="text-sm font-medium text-blue-400">
+                  {storageUsage.sizeUsed}
+                </p>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Auto-tagging</span>
@@ -419,12 +552,9 @@ export default function SettingsPage() {
             </Button>
             <div className="space-y-2">
               <p className="text-white font-medium">Recent Invoices</p>
-              {recentInvoices.map((invoice) => (
-                <div key={invoice.id} className="bg-gray-800 p-3 rounded-lg">
-                  <p className="text-white">Invoice #{invoice.id} - ${invoice.amount.toFixed(2)}</p>
-                  <p className="text-sm text-gray-400">{invoice.date}</p>
-                </div>
-              ))}
+              <div className="bg-gray-800/50 p-4 rounded-lg border border-gray-800 border-dashed text-center">
+                <p className="text-sm text-gray-500 italic">Billing integration is coming soon</p>
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
               <Button variant="outline" className="flex-1">
@@ -494,8 +624,12 @@ export default function SettingsPage() {
 
       {/* Mobile Save Button */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 md:hidden">
-        <Button className="w-full">
-          Save Changes
+        <Button 
+          className="w-full" 
+          onClick={handleSaveProfile}
+          disabled={isSaving || name === user?.displayName}
+        >
+          {isSaving ? "Saving..." : "Save Profile"}
         </Button>
       </div>
     </div>
