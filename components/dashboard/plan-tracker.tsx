@@ -4,23 +4,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { CreditCard } from "lucide-react"
+import { useDocuments } from "@/hooks/useDocuments"
 
 interface PlanTrackerProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function PlanTracker({ className, ...props }: PlanTrackerProps) {
-  // Example usage data
-  const docsUsed = 4
+  const { documents } = useDocuments()
+
+  // Real usage data
+  const docsUsed = documents.length
   const docsLimit = 10
-  const storageUsed = 125 // MB
+  
+  const totalBytes = documents.reduce((acc, doc) => acc + (doc.file_size_bytes || 0), 0)
+  const storageUsed = totalBytes / (1024 * 1024) // Convert to MB
   const storageLimit = 500 // MB
-  const queriesUsed = 78
+  
+  const queriesUsed = 0 // Not in documents array
   const queriesLimit = 500
 
   return (
     <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
       <CardHeader>
         <CardTitle>Plan Usage</CardTitle>
-        <CardDescription>Your current Pro plan usage and limits</CardDescription>
+        <CardDescription>Your current Free plan usage and limits</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
@@ -37,7 +43,7 @@ export function PlanTracker({ className, ...props }: PlanTrackerProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Storage</span>
             <span className="text-sm text-muted-foreground">
-              {storageUsed} MB/{storageLimit} MB
+              {storageUsed.toFixed(1)} MB/{storageLimit} MB
             </span>
           </div>
           <Progress value={(storageUsed / storageLimit) * 100} className="h-2 bg-muted" />

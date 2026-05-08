@@ -25,6 +25,15 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { useDocuments } from "@/hooks/useDocuments";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Document } from "@/lib/api";
 
 const statusColors: Record<string, string> = {
   ready: "bg-green-500",
@@ -36,6 +45,7 @@ export default function UploadsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
   const { documents, loading, uploading, uploadProgress, upload, remove, formatFileSize } = useDocuments();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -154,7 +164,7 @@ export default function UploadsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem className="text-red-600" onClick={() => remove(doc.id)}>
+                      <DropdownMenuItem className="text-red-600" onClick={() => setDocumentToDelete(doc)}>
                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -198,7 +208,7 @@ export default function UploadsPage() {
                 <TableCell>{formatFileSize(doc.file_size_bytes)}</TableCell>
                 <TableCell>{format(new Date(doc.created_at), "MMM d, yyyy")}</TableCell>
                 <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => remove(doc.id)}>
+                  <Button variant="ghost" size="icon" onClick={() => setDocumentToDelete(doc)}>
                     <Trash2 className="h-4 w-4 text-red-500" />
                   </Button>
                 </TableCell>
@@ -207,6 +217,35 @@ export default function UploadsPage() {
           </TableBody>
         </Table>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!documentToDelete} onOpenChange={(open) => !open && setDocumentToDelete(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Are you sure you want to delete {documentToDelete?.filename}?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the document
+              and all its associated chunks from our servers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDocumentToDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (documentToDelete) {
+                  remove(documentToDelete.id);
+                  setDocumentToDelete(null);
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

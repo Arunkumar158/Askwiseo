@@ -11,18 +11,33 @@ def get_db():
         _db = firestore.client()
     return _db
 
-def create_document_record(user_id, filename, page_count, chunk_count, file_size_bytes):
+def create_document_record(user_id, filename, page_count, chunk_count, file_size_bytes, file_hash=None):
     db = get_db()
     doc_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     data = {
         "id": doc_id, "user_id": user_id, "filename": filename,
         "page_count": page_count, "chunk_count": chunk_count,
-        "file_size_bytes": file_size_bytes, "status": "ready",
-        "created_at": now, "updated_at": now,
+        "file_size_bytes": file_size_bytes, "file_hash": file_hash,
+        "status": "ready", "created_at": now, "updated_at": now,
     }
-    get_db().collection("documents").document(doc_id).set(data)
+    db.collection("documents").document(doc_id).set(data)
     return data
+
+def get_document_by_hash(user_id: str, file_hash: str):
+    db = get_db()
+    docs = db.collection("documents") \
+        .where("user_id", "==", user_id) \
+        .where("file_hash", "==", file_hash) \
+        .limit(1).stream()
+    
+    for doc in docs:
+        return doc.to_dict()
+    return None
+
+def count_user_documents(user_id: str) -> int:
+    db = get_db()
+    return db.collection("documents").where("user_id", "==", user_id).count().get()[0][0].value
 
 def get_user_documents(user_id: str):
     db = get_db()
