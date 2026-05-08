@@ -3,6 +3,7 @@ from auth import get_current_user
 from services.pdf_service import extract_text_from_pdf, chunk_text, get_page_count
 from services.vector_store import store_chunks
 from services.db_service import create_document_record, get_document_by_hash, count_user_documents
+from services.ai_service import generate_document_summary
 from config import settings
 import hashlib
 
@@ -46,14 +47,26 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
         raise HTTPException(status_code=422, detail="PDF has no extractable text (image-only PDF not supported).")
     page_count = get_page_count(file_bytes)
     chunks = chunk_text(text)
+    filename = file.filename or "document.pdf"
+
+    # Generate summary and topics
+    insights = generate_document_summary(filename=filename, text=text)
+
     doc_record = create_document_record(
-        user_id=user["uid"], filename=file.filename or "document.pdf",
-        page_count=page_count, chunk_count=len(chunks), file_size_bytes=len(file_bytes),
-        file_hash=file_hash
+        user_id=user["uid"],
+        filename=filename,
+        page_count=page_count,
+        chunk_count=len(chunks),
+        file_size_bytes=len(file_bytes),
+        file_hash=file_hash,
+        summary=insights.get("summary", ""),
+        key_topics=insights.get("key_topics", []),
+        document_type=insights.get("document_type", "Other"),
+        action_items=insights.get("action_items", []),
     )
     try:
         store_chunks(document_id=doc_record["id"], user_id=user["uid"],
-                     filename=file.filename or "document.pdf", chunks=chunks)
+                     filename=filename, chunks=chunks)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to index document: {str(e)}")
     return {"success": True, "document": doc_record, "chunk_count": len(chunks), "page_count": page_count}

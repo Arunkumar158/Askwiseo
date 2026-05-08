@@ -60,4 +60,48 @@ def generate_answer(question: str, user_id: str, document_id=None, chat_history=
     ]
 
     return {"answer": answer, "sources": sources}
+
+def generate_document_summary(filename: str, text: str) -> dict:
+    """
+    Generate a summary and extract key topics from document text.
+    Called automatically after PDF upload.
+    """
+    genai.configure(api_key=settings.GEMINI_API_KEY)
+    
+    # Use first 3000 chars for summary (cost efficient)
+    sample_text = text[:3000]
+    
+    model = genai.GenerativeModel(
+        model_name=settings.CHAT_MODEL,
+        system_instruction="You are a business document analyst. Be concise and professional."
+    )
+    
+    prompt = f"""Analyze this document and respond ONLY with a valid JSON object, no markdown, no backticks:
+{{
+  "summary": "2-3 sentence summary of what this document is about",
+  "key_topics": ["topic1", "topic2", "topic3", "topic4", "topic5"],
+  "document_type": "one of: Contract, Report, Resume, Invoice, Policy, Meeting Notes, Proposal, Other",
+  "action_items": ["any deadlines or action items found, empty array if none"]
+}}
+
+Document name: {filename}
+Document content: {sample_text}"""
+
+    try:
+        response = model.generate_content(prompt)
+        import json
+        # Clean response text
+        text_response = response.text.strip()
+        if text_response.startswith("```"):
+            text_response = text_response.split("```")[1]
+            if text_response.startswith("json"):
+                text_response = text_response[4:]
+        return json.loads(text_response.strip())
+    except Exception as e:
+        return {
+            "summary": f"Document uploaded successfully: {filename}",
+            "key_topics": [],
+            "document_type": "Other",
+            "action_items": []
+        }
     

@@ -11,15 +11,36 @@ def get_db():
         _db = firestore.client()
     return _db
 
-def create_document_record(user_id, filename, page_count, chunk_count, file_size_bytes, file_hash=None):
+def create_document_record(
+    user_id: str,
+    filename: str,
+    page_count: int,
+    chunk_count: int,
+    file_size_bytes: int,
+    file_hash: str = None,
+    summary: str = "",
+    key_topics: list = [],
+    document_type: str = "Other",
+    action_items: list = [],
+) -> Dict[str, Any]:
     db = get_db()
     doc_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     data = {
-        "id": doc_id, "user_id": user_id, "filename": filename,
-        "page_count": page_count, "chunk_count": chunk_count,
-        "file_size_bytes": file_size_bytes, "file_hash": file_hash,
-        "status": "ready", "created_at": now, "updated_at": now,
+        "id": doc_id,
+        "user_id": user_id,
+        "filename": filename,
+        "page_count": page_count,
+        "chunk_count": chunk_count,
+        "file_size_bytes": file_size_bytes,
+        "file_hash": file_hash,
+        "status": "ready",
+        "summary": summary,
+        "key_topics": key_topics,
+        "document_type": document_type,
+        "action_items": action_items,
+        "created_at": now,
+        "updated_at": now,
     }
     db.collection("documents").document(doc_id).set(data)
     return data
@@ -89,3 +110,49 @@ def get_chat_history(user_id: str, document_id=None, limit: int = 20):
     
     # Take the limit and then reverse back for chronological order in UI
     return list(reversed(sorted_chats[:limit]))
+
+def get_user_insights(user_id: str) -> Dict[str, Any]:
+    db = get_db()
+    docs = db.collection("documents").where("user_id", "==", user_id).stream()
+    doc_list = [doc.to_dict() for doc in docs]
+    
+    total_pages = 0
+    total_chunks = 0
+    total_size = 0
+    type_counts = {}
+    topic_counts = {}
+    all_action_items = []
+    
+    for doc in doc_list:
+        total_pages += doc.get("page_count", 0)
+        total_chunks += doc.get("chunk_count", 0)
+        total_size += doc.get("file_size_bytes", 0)
+        
+        doc_type = doc.get("document_type", "Other")
+        type_counts[doc_type] = type_counts.get(doc_type, 0) + 1
+        
+        for topic in doc.get("key_topics", []):
+            topic_counts[topic] = topic_counts.get(topic, 0) + 1
+            
+        for item in doc.get("action_items", []):
+            all_action_items.append({
+                "text": item,
+                "source": doc.get("filename", "Unknown"),
+                "document_id": doc.get("id")
+            })
+            
+    # Sort topics by count
+    sorted_topics = [
+        {"topic": t, "count": c} 
+        for t, c in sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
+    ]
+    
+    return {
+        "total_documents": len(doc_list),
+        "total_pages": total_pages,
+        "total_chunks": total_chunks,
+        "total_size_bytes": total_size,
+        "document_types": type_counts,
+        "top_topics": sorted_topics[:15],
+        "all_action_items": all_action_items
+    }

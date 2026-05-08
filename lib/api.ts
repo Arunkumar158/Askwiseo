@@ -47,6 +47,16 @@ export interface ChatResult {
     chat_id: string;
 }
 
+export interface Insights {
+    total_documents: number;
+    total_pages: number;
+    total_chunks: number;
+    total_size_bytes: number;
+    document_types: Record<string, number>;
+    top_topics: { topic: string; count: number }[];
+    all_action_items: { text: string; source: string; document_id: string }[];
+}
+
 async function getAuthHeaders(): Promise<HeadersInit> {
     const user = auth.currentUser;
     if (!user) {
@@ -99,6 +109,10 @@ export async function getDocument(documentId: string): Promise<Document> {
 
 export async function deleteDocument(documentId: string): Promise<{ success: boolean }> {
     return apiFetch(`/api/documents/${documentId}`, { method: "DELETE" });
+}
+
+export async function getInsights(): Promise<Insights> {
+    return apiFetch("/api/documents/insights");
 }
 
 export async function sendChatMessage(
