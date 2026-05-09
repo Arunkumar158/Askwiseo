@@ -63,7 +63,7 @@ async function getAuthHeaders(): Promise<HeadersInit> {
         throw new Error("Please sign in to continue");
     }
     try {
-        const token = await user.getIdToken(true); // force refresh
+        const token = await user.getIdToken();
         return { Authorization: `Bearer ${token}` };
     } catch (error) {
         throw new Error("Authentication failed. Please sign in again.");
@@ -138,6 +138,30 @@ export async function getChatHistory(
     const params = new URLSearchParams({ limit: String(limit) });
     if (documentId) params.set("document_id", documentId);
     return apiFetch(`/api/chat/history?${params}`);
+}
+
+export interface UserPlan {
+    plan: "free" | "starter" | "pro" | "enterprise";
+    questions_today: number;
+    questions_limit: number;
+    pdf_count: number;
+    pdf_limit: number;
+    storage_used_bytes: number;
+    storage_limit_bytes: number;
+    billing_cycle_start: string;
+    razorpay_subscription_id?: string;
+}
+
+export async function getUserPlan(): Promise<UserPlan> {
+    return apiFetch("/api/plan");
+}
+
+export async function createRazorpayOrder(planId: string): Promise<{ order_id: string; amount: number; currency: string }> {
+    return apiFetch("/api/billing/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan_id: planId }),
+    });
 }
 
 export function formatFileSize(bytes: number): string {

@@ -28,7 +28,7 @@ import { useAuth } from "@/contexts/AuthContext"
 
 export function Header() {
   const router = useRouter()
-  const { handleLogout } = useAuth()
+  const { user, logOut, loading } = useAuth()
   
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
@@ -55,36 +55,50 @@ export function Header() {
           </div>
           <ThemeToggle />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>U</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">User</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    user@example.com
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push("/profile")}>
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push("/settings")}>
-                Settings
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleLogout}>
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {!loading && user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.photoURL || undefined} alt={user.displayName || "User"} />
+                    <AvatarFallback>{user.displayName?.[0] || user.email?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuLabel className="font-normal">
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium leading-none">{user.displayName || "User"}</p>
+                    <p className="text-xs leading-none text-muted-foreground">
+                      {user.email}
+                    </p>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => router.push("/profile")}>
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push("/settings")}>
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={logOut}>
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+
+          {!loading && !user && (
+            <div className="flex items-center gap-2">
+              <Link href="/login">
+                <Button variant="ghost" size="sm">Sign In</Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm">Get Started</Button>
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </header>

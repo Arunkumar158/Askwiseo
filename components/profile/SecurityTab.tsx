@@ -12,11 +12,10 @@ import {
   Smartphone,
   LogOut,
   Copy
-} from "lucide-react";
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function SecurityTab() {
-  const { handleLogout } = useAuth()
+  const { logOut } = useAuth()
 
   return (
     <div className="space-y-6">
@@ -87,7 +86,7 @@ export function SecurityTab() {
       <Card className="p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Active Sessions</h2>
-          <Button variant="outline" size="sm" onClick={handleLogout}>
+          <Button variant="outline" size="sm" onClick={logOut}>
             <LogOut className="h-4 w-4 mr-2" />
             Logout All Devices
           </Button>

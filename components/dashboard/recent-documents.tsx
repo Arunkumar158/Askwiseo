@@ -40,13 +40,13 @@ export function RecentDocuments({ className, ...props }: RecentDocumentsProps) {
           <div className="space-y-4">
             {recent.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3 transition-colors duration-150 hover:bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-md bg-violet-100">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-violet-100">
                     <FileText className="h-5 w-5 text-violet-600" />
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{doc.filename}</p>
-                    <p className="text-xs text-muted-foreground">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{doc.filename}</p>
+                    <p className="text-xs text-muted-foreground truncate">
                       {new Date(doc.created_at).toLocaleDateString()} • {doc.page_count} pages • {formatFileSize(doc.file_size_bytes)}
                     </p>
                   </div>

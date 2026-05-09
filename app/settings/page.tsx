@@ -244,7 +244,7 @@ export default function SettingsPage() {
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8 text-white">Settings</h1>
 
       <div className="space-y-6 md:space-y-8">
@@ -623,7 +623,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Mobile Save Button */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-800 md:hidden z-50">
         <Button 
           className="w-full" 
           onClick={handleSaveProfile}

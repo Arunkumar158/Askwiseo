@@ -34,6 +34,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Document } from "@/lib/api";
+import { usePlan } from "@/hooks/usePlan";
+import { UpgradeModal } from "@/components/upgrade-modal";
 
 const statusColors: Record<string, string> = {
   ready: "bg-green-500",
@@ -46,12 +48,18 @@ export default function UploadsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { plan, canUpload } = usePlan();
   const { documents, loading, uploading, uploadProgress, upload, remove, formatFileSize } = useDocuments();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: { "application/pdf": [".pdf"] },
     maxFiles: 1,
     onDrop: (acceptedFiles) => {
+      if (!canUpload && plan) {
+        setShowUpgradeModal(true);
+        return;
+      }
       if (acceptedFiles[0]) upload(acceptedFiles[0]);
     },
   });
@@ -98,7 +106,12 @@ export default function UploadsPage() {
             <List className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex gap-4 w-full sm:w-auto">
+        <div className="flex gap-4 w-full sm:w-auto items-center">
+          {plan && (
+            <Badge variant="outline" className="hidden md:inline-flex shrink-0">
+              {plan.plan.charAt(0).toUpperCase() + plan.plan.slice(1)} Plan: {plan.pdf_count}/{plan.pdf_limit === 999999 ? "∞" : plan.pdf_limit} PDFs
+            </Badge>
+          )}
           <div className="relative flex-1 sm:flex-initial">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -184,38 +197,40 @@ export default function UploadsPage() {
 
       {/* List View */}
       {!loading && filteredDocuments.length > 0 && viewMode === "list" && (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Pages</TableHead>
-              <TableHead>Size</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredDocuments.map((doc) => (
-              <TableRow key={doc.id}>
-                <TableCell className="font-medium">{doc.filename}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className={statusColors[doc.status] || "bg-gray-500"}>
-                    {doc.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{doc.page_count}</TableCell>
-                <TableCell>{formatFileSize(doc.file_size_bytes)}</TableCell>
-                <TableCell>{format(new Date(doc.created_at), "MMM d, yyyy")}</TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" onClick={() => setDocumentToDelete(doc)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
-                </TableCell>
+        <div className="overflow-x-auto rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Pages</TableHead>
+                <TableHead>Size</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredDocuments.map((doc) => (
+                <TableRow key={doc.id}>
+                  <TableCell className="font-medium min-w-[200px]">{doc.filename}</TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className={statusColors[doc.status] || "bg-gray-500"}>
+                      {doc.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{doc.page_count}</TableCell>
+                  <TableCell className="whitespace-nowrap">{formatFileSize(doc.file_size_bytes)}</TableCell>
+                  <TableCell className="whitespace-nowrap">{format(new Date(doc.created_at), "MMM d, yyyy")}</TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" onClick={() => setDocumentToDelete(doc)}>
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Delete Confirmation Dialog */}
@@ -246,6 +261,12 @@ export default function UploadsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        reason="pdf_limit"
+      />
     </div>
   );
 }

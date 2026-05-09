@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 
 export default function ProfilePage() {
-  const { user, handleLogout } = useAuth();
+  const { user, logOut } = useAuth();
   return (
     <ProtectedRoute>
       <div className="container mx-auto p-4 max-w-2xl">
@@ -43,7 +43,7 @@ export default function ProfilePage() {
                 </div>
                 <Button 
                   variant="destructive" 
-                  onClick={handleLogout}
+                  onClick={logOut}
                   className="w-full sm:w-auto"
                 >
                   Logout

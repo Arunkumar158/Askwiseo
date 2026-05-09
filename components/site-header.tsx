@@ -19,7 +19,7 @@ import { NotificationButton } from "@/components/notifications/notification-butt
 import { NotificationType } from "@/lib/types/notification"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/contexts/AuthContext"
 
 // Example notifications data - replace with your actual data
 const notifications = [
@@ -49,9 +49,12 @@ const notifications = [
   },
 ];
 
+import { usePlan } from "@/hooks/usePlan"
+
 export function SiteHeader() {
   const router = useRouter()
-  const { handleLogout } = useAuth()
+  const { user, logOut, loading } = useAuth()
+  const { plan } = usePlan()
   
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
@@ -79,61 +82,66 @@ export function SiteHeader() {
           <ThemeToggle />
           <NotificationButton notifications={notifications} />
           <div className="flex items-center gap-2">
-            <Link href="/pricing">
-              <Badge variant="outline" className="bg-violet-50 text-violet-700 hover:bg-violet-50 cursor-pointer">
-                Pro Plan
-              </Badge>
-            </Link>
-            <Link href="/signin">
-              <Button variant="ghost" className="text-sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/signup">
-              <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
-                Get Started
-              </Button>
-            </Link>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  className="relative h-8 w-8 rounded-full"
-                  onClick={(e) => {
-                    // Prevent the dropdown from opening when clicking the avatar
-                    e.stopPropagation();
-                  }}
-                >
-                  <Avatar 
-                    className="h-8 w-8 cursor-pointer" 
-                    onClick={() => router.push('/profile')}
+            {user && (
+              <Link href="/pricing">
+                <Badge variant="outline" className="bg-violet-50 text-violet-700 hover:bg-violet-50 cursor-pointer capitalize">
+                  {plan?.plan || "Free"} Plan
+                </Badge>
+              </Link>
+            )}
+            
+            {!loading && !user && (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="text-sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                    Get Started
+                  </Button>
+                </Link>
+              </>
+            )}
+
+            {!loading && user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="relative h-8 w-8 rounded-full"
                   >
-                    <AvatarImage src="/placeholder.svg?height=32&width=32" alt="@user" />
-                    <AvatarFallback>JD</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">John Doe</p>
-                    <p className="text-xs leading-none text-muted-foreground">john.doe@example.com</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => router.push('/profile')}>
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem>Billing</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push('/settings')}>
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout}>
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                    <Avatar className="h-8 w-8 cursor-pointer">
+                      <AvatarImage src={user.photoURL || "/placeholder.svg?height=32&width=32"} alt={user.displayName || "User"} />
+                      <AvatarFallback>{user.displayName?.[0] || user.email?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{user.displayName || "User"}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push('/profile')}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/settings')}>
+                    Billing & Plans
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/settings')}>
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logOut}>
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </div>

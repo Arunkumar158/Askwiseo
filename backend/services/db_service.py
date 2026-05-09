@@ -156,3 +156,43 @@ def get_user_insights(user_id: str) -> Dict[str, Any]:
         "top_topics": sorted_topics[:15],
         "all_action_items": all_action_items
     }
+
+def get_user_plan(user_id: str) -> Dict[str, Any]:
+    db = get_db()
+    ref = db.collection("user_plans").document(user_id).get()
+    if not ref.exists:
+        now = datetime.now(timezone.utc).isoformat()
+        default_plan = {
+            "user_id": user_id,
+            "plan": "free",
+            "pdf_limit": 10,
+            "questions_limit": 20,
+            "questions_today": 0,
+            "storage_limit_bytes": 52428800,
+            "last_question_date": now[:10],
+            "billing_cycle_start": now,
+            "razorpay_subscription_id": None
+        }
+        db.collection("user_plans").document(user_id).set(default_plan)
+        return default_plan
+    return ref.to_dict()
+
+def update_user_plan(user_id: str, updates: Dict[str, Any]) -> None:
+    db = get_db()
+    db.collection("user_plans").document(user_id).set(updates, merge=True)
+
+def increment_question_count(user_id: str) -> None:
+    plan = get_user_plan(user_id)
+    today = datetime.now(timezone.utc).isoformat()[:10]
+    
+    if plan.get("last_question_date") != today:
+        updates = {
+            "questions_today": 1,
+            "last_question_date": today
+        }
+    else:
+        updates = {
+            "questions_today": plan.get("questions_today", 0) + 1
+        }
+    
+    update_user_plan(user_id, updates)

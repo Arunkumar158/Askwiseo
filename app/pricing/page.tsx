@@ -1,263 +1,248 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Check, X } from "lucide-react"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
-import { cn } from "@/lib/utils"
+import { useState } from "react";
+import { Check, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { createRazorpayOrder } from "@/lib/api";
+import toast from "react-hot-toast";
+import Link from "next/link";
+
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    if ((window as any).Razorpay) {
+      resolve(true);
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
 
 export default function PricingPage() {
-  const [isYearly, setIsYearly] = useState(false)
+  const [loading, setLoading] = useState<string | null>(null);
 
-  const plans = [
-    {
-      name: "Free Plan",
-      price: isYearly ? "₹0/year" : "₹0/month",
-      description: "Perfect for getting started with document intelligence",
-      features: [
-        { text: "Upload up to 10 PDFs", included: true },
-        { text: "Ask 50 AI queries/month", included: true },
-        { text: "Basic insights", included: true },
-        { text: "No priority support", included: false },
-        { text: "No export features", included: false },
-      ],
-      cta: "Get Started Free",
-      popular: false,
-    },
-    {
-      name: "Pro Plan",
-      price: isYearly ? "₹38,390/year" : "₹3,999/month",
-      description: "Most popular for professionals and small teams",
-      features: [
-        { text: "Upload up to 500 PDFs", included: true },
-        { text: "Unlimited AI queries", included: true },
-        { text: "Chat export to PDF/Markdown", included: true },
-        { text: "Smart tagging and summaries", included: true },
-        { text: "Priority processing", included: true },
-        { text: "Team sharing (up to 5 users)", included: true },
-      ],
-      cta: "Upgrade to Pro",
-      popular: true,
-    },
-    {
-      name: "Enterprise Plan",
-      price: "Custom Pricing",
-      description: "For large organizations with advanced needs",
-      features: [
-        { text: "Unlimited everything", included: true },
-        { text: "Custom integrations (Slack, API)", included: true },
-        { text: "Dedicated account manager", included: true },
-        { text: "Advanced security and support", included: true },
-        { text: "Custom training and onboarding", included: true },
-      ],
-      cta: "Contact Sales",
-      popular: false,
-    },
-  ]
+  const handleUpgrade = async (planId: string) => {
+    setLoading(planId);
+    try {
+      const res = await loadRazorpayScript();
+      if (!res) {
+        toast.error("Razorpay SDK failed to load. Are you online?");
+        return;
+      }
 
-  const addOns = [
-    {
-      name: "Additional PDFs",
-      price: "₹499/month",
-      description: "Per additional 100 PDFs",
-    },
-    {
-      name: "Multilingual Support",
-      price: "₹999/month",
-      description: "For multilingual document support",
-    },
-  ]
+      const order = await createRazorpayOrder(planId);
 
-  const faqs = [
-    {
-      question: "Can I cancel anytime?",
-      answer: "Yes, you can cancel your subscription at any time. Your access will continue until the end of your billing period.",
-    },
-    {
-      question: "What happens if I hit my query limit?",
-      answer: "If you reach your monthly query limit, you'll be notified and can upgrade your plan to continue using the service.",
-    },
-    {
-      question: "Do you store my PDFs securely?",
-      answer: "Yes, all documents are encrypted at rest and in transit. We use industry-standard security practices to protect your data.",
-    },
-    {
-      question: "Can I switch between plans?",
-      answer: "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.",
-    },
-    {
-      question: "Do you offer refunds?",
-      answer: "We offer a 14-day money-back guarantee for all paid plans if you're not satisfied with our service.",
-    },
-  ]
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_dummy",
+        amount: order.amount,
+        currency: order.currency,
+        name: "Askwiseo",
+        description: "Upgrade Plan",
+        order_id: order.order_id,
+        handler: function (response: any) {
+          toast.success("Payment successful! Your plan will be updated shortly.");
+        },
+        prefill: {
+          name: "User",
+          email: "user@example.com",
+        },
+        theme: {
+          color: "#7c3aed",
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create order");
+    } finally {
+      setLoading(null);
+    }
+  };
 
   return (
-    <div className="container py-16 space-y-16">
-      {/* Hero Section */}
-      <section className="text-center space-y-6 max-w-3xl mx-auto">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-blue-500">
-          Unlock the Full Power of Document Intelligence
+    <div className="container mx-auto py-16 px-4 md:px-6">
+      <div className="text-center mb-16">
+        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-4">
+          Simple, transparent pricing
         </h1>
-        <p className="text-xl text-muted-foreground">
-          From chaos to clarity — Askwiseo turns your PDFs into answers.
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Choose the perfect plan for your document analysis needs.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-700 hover:to-blue-700 transition-all duration-300">
-            Start Free Trial
-          </Button>
-          <p className="text-sm text-muted-foreground flex items-center justify-center">
-            No credit card required
-          </p>
-        </div>
-      </section>
-
-      {/* Pricing Toggle */}
-      <div className="flex items-center justify-center space-x-2">
-        <Label htmlFor="billing-toggle" className={cn("text-sm", !isYearly && "text-foreground font-medium")}>
-          Monthly
-        </Label>
-        <Switch
-          id="billing-toggle"
-          checked={isYearly}
-          onCheckedChange={setIsYearly}
-          className="data-[state=checked]:bg-violet-600"
-        />
-        <Label htmlFor="billing-toggle" className={cn("text-sm", isYearly && "text-foreground font-medium")}>
-          Yearly
-          <span className="ml-1 text-xs text-violet-600 font-medium">Save 20%</span>
-        </Label>
       </div>
 
-      {/* Pricing Cards */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {plans.map((plan) => (
-          <Card 
-            key={plan.name} 
-            className={cn(
-              "relative flex flex-col transition-all duration-300 hover:shadow-lg hover:-translate-y-1",
-              plan.popular && "border-violet-500 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
-            )}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+        {/* Free Plan */}
+        <div className="border rounded-2xl p-6 flex flex-col bg-card">
+          <h3 className="text-xl font-bold">Free</h3>
+          <p className="text-sm text-muted-foreground mt-2">Perfect to try out Askwiseo</p>
+          <div className="mt-4 flex items-baseline text-3xl font-extrabold">
+            ₹0
+            <span className="ml-1 text-xl font-medium text-muted-foreground">/mo</span>
+          </div>
+          <ul className="mt-6 space-y-4 flex-1">
+            {["10 PDFs", "20 questions/day", "Basic AI Chat", "50MB Storage limit"].map((feature) => (
+              <li key={feature} className="flex items-center">
+                <Check className="h-5 w-5 text-violet-500 shrink-0 mr-2" />
+                <span className="text-sm">{feature}</span>
+              </li>
+            ))}
+          </ul>
+          <Button asChild variant="outline" className="w-full mt-8">
+            <Link href="/">Get Started Free</Link>
+          </Button>
+        </div>
+
+        {/* Starter Plan */}
+        <div className="border rounded-2xl p-6 flex flex-col bg-card">
+          <h3 className="text-xl font-bold">Starter</h3>
+          <p className="text-sm text-muted-foreground mt-2">For regular document analysis</p>
+          <div className="mt-4 flex items-baseline text-3xl font-extrabold">
+            ₹499
+            <span className="ml-1 text-xl font-medium text-muted-foreground">/mo</span>
+          </div>
+          <ul className="mt-6 space-y-4 flex-1">
+            {["50 PDFs", "200 questions/month", "AI summaries", "15MB max file size", "Priority processing"].map((feature) => (
+              <li key={feature} className="flex items-center">
+                <Check className="h-5 w-5 text-violet-500 shrink-0 mr-2" />
+                <span className="text-sm">{feature}</span>
+              </li>
+            ))}
+          </ul>
+          <Button
+            className="w-full mt-8 bg-violet-600 hover:bg-violet-700"
+            onClick={() => handleUpgrade("starter")}
+            disabled={!!loading}
           >
-            {plan.popular && (
-              <Badge className="absolute top-0 right-0 m-4 bg-violet-600 hover:bg-violet-700">
-                Most Popular
-              </Badge>
-            )}
-            <CardHeader>
-              <CardTitle>{plan.name}</CardTitle>
-              <CardDescription>{plan.description}</CardDescription>
-              <div className="mt-4">
-                <span className="text-3xl font-bold">{plan.price}</span>
-                {isYearly && plan.name !== "Enterprise Plan" && (
-                  <span className="text-sm text-muted-foreground ml-2">billed annually</span>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="flex-grow">
-              <ul className="space-y-3">
-                {plan.features.map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    {feature.included ? (
-                      <Check className="h-5 w-5 text-violet-600 mr-2 flex-shrink-0" />
-                    ) : (
-                      <X className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0" />
-                    )}
-                    <span className={cn("text-sm", !feature.included && "text-muted-foreground")}>
-                      {feature.text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                className={cn(
-                  "w-full",
-                  plan.popular 
-                    ? "bg-violet-600 hover:bg-violet-700" 
-                    : plan.name === "Enterprise Plan"
-                    ? "bg-secondary hover:bg-secondary/80"
-                    : "bg-primary hover:bg-primary/90"
-                )}
-              >
-                {plan.cta}
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </section>
-
-      {/* Add-ons Section */}
-      <section className="space-y-6">
-        <h2 className="text-2xl font-bold text-center">Add-ons</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {addOns.map((addon) => (
-            <Card key={addon.name} className="flex flex-col">
-              <CardHeader>
-                <CardTitle className="text-lg">{addon.name}</CardTitle>
-                <CardDescription>{addon.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-grow">
-                <p className="text-2xl font-bold">{addon.price}</p>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="w-full">Add to Plan</Button>
-              </CardFooter>
-            </Card>
-          ))}
+            {loading === "starter" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Upgrade Now
+          </Button>
         </div>
-      </section>
 
-      {/* Trust Section */}
-      <section className="bg-secondary/30 rounded-2xl p-8 space-y-6">
-        <h2 className="text-2xl font-bold text-center">Trust & Security</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-          <div className="text-center space-y-2">
-            <div className="h-12 w-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <h3 className="font-medium">Data Encrypted</h3>
-            <p className="text-sm text-muted-foreground">At rest and in transit</p>
+        {/* Pro Plan */}
+        <div className="border-2 border-violet-600 rounded-2xl p-6 flex flex-col relative bg-card shadow-lg lg:scale-105 z-10">
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <span className="bg-violet-600 text-white text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
+              Most Popular
+            </span>
           </div>
-          <div className="text-center space-y-2">
-            <div className="h-12 w-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h3 className="font-medium">SOC2 Compliance</h3>
-            <p className="text-sm text-muted-foreground">Coming soon</p>
+          <h3 className="text-xl font-bold">Pro</h3>
+          <p className="text-sm text-muted-foreground mt-2">For power users and professionals</p>
+          <div className="mt-4 flex items-baseline text-3xl font-extrabold">
+            ₹1499
+            <span className="ml-1 text-xl font-medium text-muted-foreground">/mo</span>
           </div>
-          <div className="text-center space-y-2">
-            <div className="h-12 w-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mx-auto">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-            <h3 className="font-medium">Powered by</h3>
-            <p className="text-sm text-muted-foreground">Firebase and OpenAI</p>
-          </div>
+          <ul className="mt-6 space-y-4 flex-1">
+            {[
+              "Unlimited PDFs",
+              "Unlimited questions",
+              "50MB max file size",
+              "Priority processing",
+              "Better citations",
+              "AI insights",
+              "Saved chats",
+              "Multi-document querying"
+            ].map((feature) => (
+              <li key={feature} className="flex items-center">
+                <Check className="h-5 w-5 text-violet-500 shrink-0 mr-2" />
+                <span className="text-sm">{feature}</span>
+              </li>
+            ))}
+          </ul>
+          <Button
+            className="w-full mt-8 bg-violet-600 hover:bg-violet-700"
+            onClick={() => handleUpgrade("pro")}
+            disabled={!!loading}
+          >
+            {loading === "pro" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+            Upgrade Now
+          </Button>
         </div>
-      </section>
 
-      {/* FAQs Section */}
-      <section className="space-y-6 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-center">Frequently Asked Questions</h2>
-        <Accordion type="single" collapsible className="w-full">
-          {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
-              <AccordionTrigger>{faq.question}</AccordionTrigger>
-              <AccordionContent>{faq.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </section>
+        {/* Enterprise Plan */}
+        <div className="border rounded-2xl p-6 flex flex-col bg-card">
+          <h3 className="text-xl font-bold">Enterprise</h3>
+          <p className="text-sm text-muted-foreground mt-2">For teams and large organizations</p>
+          <div className="mt-4 flex items-baseline text-3xl font-extrabold">
+            Custom
+          </div>
+          <ul className="mt-6 space-y-4 flex-1">
+            {[
+              "Everything in Pro",
+              "Team workspaces",
+              "Admin dashboard",
+              "API access",
+              "Audit logs",
+              "Dedicated support"
+            ].map((feature) => (
+              <li key={feature} className="flex items-center">
+                <Check className="h-5 w-5 text-violet-500 shrink-0 mr-2" />
+                <span className="text-sm">{feature}</span>
+              </li>
+            ))}
+          </ul>
+          <Button
+            variant="outline"
+            className="w-full mt-8"
+            onClick={() => window.location.href = "mailto:sales@askwiseo.com"}
+          >
+            Contact Sales
+          </Button>
+        </div>
+      </div>
+
+      <div className="mt-24 max-w-3xl mx-auto mb-16">
+        <h2 className="text-3xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+        <div className="space-y-4">
+          <details className="group border rounded-lg p-4 bg-card">
+            <summary className="flex cursor-pointer items-center justify-between font-medium">
+              <span>Can I cancel anytime?</span>
+              <span className="transition group-open:rotate-180">
+                <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
+            </summary>
+            <p className="text-muted-foreground mt-4 group-open:animate-fadeIn">
+              Yes, you can cancel your subscription at any time. Your current plan will remain active until the end of your billing cycle.
+            </p>
+          </details>
+          <details className="group border rounded-lg p-4 bg-card">
+            <summary className="flex cursor-pointer items-center justify-between font-medium">
+              <span>Is my data secure?</span>
+              <span className="transition group-open:rotate-180">
+                <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
+            </summary>
+            <p className="text-muted-foreground mt-4 group-open:animate-fadeIn">
+              Absolutely. We use industry-standard encryption for all data in transit and at rest. Your documents are private and only accessible by you.
+            </p>
+          </details>
+          <details className="group border rounded-lg p-4 bg-card">
+            <summary className="flex cursor-pointer items-center justify-between font-medium">
+              <span>What happens when I hit the free limit?</span>
+              <span className="transition group-open:rotate-180">
+                <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
+            </summary>
+            <p className="text-muted-foreground mt-4 group-open:animate-fadeIn">
+              Once you hit your free limit, you will be prompted to upgrade to a paid plan to continue uploading documents or asking questions.
+            </p>
+          </details>
+          <details className="group border rounded-lg p-4 bg-card">
+            <summary className="flex cursor-pointer items-center justify-between font-medium">
+              <span>Do you offer refunds?</span>
+              <span className="transition group-open:rotate-180">
+                <svg fill="none" height="24" shapeRendering="geometricPrecision" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+              </span>
+            </summary>
+            <p className="text-muted-foreground mt-4 group-open:animate-fadeIn">
+              We do not offer refunds for partial months of service. If you are unsatisfied, please contact support and we will do our best to resolve your issue.
+            </p>
+          </details>
+        </div>
+      </div>
     </div>
-  )
-} 
+  );
+}

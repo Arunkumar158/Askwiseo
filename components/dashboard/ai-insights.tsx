@@ -35,13 +35,13 @@ export function AIInsights({ className, ...props }: AIInsightsProps) {
           <div className="space-y-3">
             {recentDocs.map((doc) => (
               <div key={doc.id} className="flex items-center justify-between rounded-lg border p-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-violet-100">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-violet-100">
                     <Search className="h-4 w-4 text-violet-600" />
                   </div>
-                  <span className="text-sm font-medium">{doc.filename}</span>
+                  <span className="text-sm font-medium truncate">{doc.filename}</span>
                 </div>
-                <span className="text-sm text-muted-foreground">{doc.chunk_count} chunks</span>
+                <span className="text-sm text-muted-foreground shrink-0 ml-2">{doc.chunk_count} chunks</span>
               </div>
             ))}
           </div>

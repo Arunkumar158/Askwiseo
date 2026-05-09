@@ -2,15 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Filter, BookOpen, Star, Clock, Tag, Send, Loader2, FileText } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Search, Filter, BookOpen, Star, Clock, Tag, Loader2, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ChatInput } from "@/components/chat-input";
 import { useChat } from "@/hooks/useChat";
 import { useDocuments } from "@/hooks/useDocuments";
+import { usePlan } from "@/hooks/usePlan";
+import { UpgradeModal } from "@/components/upgrade-modal";
 import ReactMarkdown from "react-markdown";
 
 export default function SearchPage() {
@@ -19,6 +21,8 @@ export default function SearchPage() {
   const [selectedDocId, setSelectedDocId] = useState<string | undefined>(undefined);
   const { messages, loading, sendMessage, loadHistory } = useChat(selectedDocId);
   const { documents } = useDocuments();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const { plan, canAskQuestion } = usePlan();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { loadHistory(); }, [loadHistory]);
@@ -28,13 +32,13 @@ export default function SearchPage() {
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
+    if (!canAskQuestion && plan) {
+      setShowUpgradeModal(true);
+      return;
+    }
     const q = input;
     setInput("");
     await sendMessage(q);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   };
 
   return (
@@ -44,17 +48,17 @@ export default function SearchPage() {
 
           {/* Sidebar */}
           <div className="hidden lg:block lg:col-span-3">
-            <Card className="h-[calc(100vh-6rem)]">
+            <Card className="h-[calc(100svh-8rem)] flex flex-col">
               <CardHeader>
                 <CardTitle className="text-lg">Documents</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1 overflow-y-auto">
                 <div className="space-y-2">
                   <div
                     className={`flex items-center space-x-2 text-sm cursor-pointer hover:text-primary p-2 rounded-lg ${!selectedDocId ? "bg-muted text-primary" : ""}`}
                     onClick={() => setSelectedDocId(undefined)}
                   >
-                    <BookOpen className="h-4 w-4" />
+                    <BookOpen className="h-4 w-4 shrink-0" />
                     <span>All Documents</span>
                   </div>
                   <Separator />
@@ -74,7 +78,7 @@ export default function SearchPage() {
           </div>
 
           {/* Main chat area */}
-          <div className="lg:col-span-9 flex flex-col h-[calc(100vh-6rem)]">
+          <div className="col-span-1 lg:col-span-9 flex flex-col h-[calc(100svh-8rem)]">
             <Card className="flex flex-col flex-1 overflow-hidden">
               <CardHeader className="border-b pb-3">
                 <CardTitle className="text-base">
@@ -85,7 +89,7 @@ export default function SearchPage() {
               </CardHeader>
 
               {/* Messages */}
-              <ScrollArea className="flex-1 p-4">
+              <ScrollArea className="flex-1 p-4 relative">
                 {documents.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground py-16">
                     <FileText className="h-12 w-12 mb-4 opacity-30" />
@@ -100,7 +104,7 @@ export default function SearchPage() {
                     <p className="text-sm mt-1">Upload PDFs from the uploads page, then ask questions here</p>
                   </div>
                 )}
-                <div className="space-y-4">
+                <div className="space-y-4 pb-32"> {/* Increased padding for floating input */}
                   {messages.map((msg) => (
                     <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
@@ -141,27 +145,22 @@ export default function SearchPage() {
                 </div>
               </ScrollArea>
 
-              {/* Input */}
-              <div className="border-t p-4">
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Ask anything about your documents..."
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={loading}
-                    className="flex-1"
-                  />
-                  <Button onClick={handleSend} disabled={loading || !input.trim()}>
-                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">Press Enter to send</p>
-              </div>
+              <ChatInput
+                value={input}
+                onChange={setInput}
+                onSend={handleSend}
+                loading={loading}
+                onUploadClick={() => router.push("/uploads")}
+              />
             </Card>
           </div>
         </div>
       </div>
+      <UpgradeModal
+        open={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        reason="question_limit"
+      />
     </div>
   );
 }

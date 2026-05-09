@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "models/gemini-embedding-2"
     CHAT_MODEL: str = "gemini-2.5-flash"
     MAX_RETRIEVED_CHUNKS: int = 5
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
+    RAZORPAY_WEBHOOK_SECRET: str = ""
 
     class Config:
         env_file = ".env"
