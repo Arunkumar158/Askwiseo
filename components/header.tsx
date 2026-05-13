@@ -4,8 +4,6 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Search } from "lucide-react"
-import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -35,24 +33,9 @@ export function Header() {
       <div className="mx-auto max-w-7xl flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2">
           <SidebarToggle />
-          <div className="hidden md:flex md:flex-1">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search documents..."
-                className="w-full rounded-full bg-muted pl-8 md:w-[300px] lg:w-[400px]"
-              />
-            </div>
-          </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="flex md:hidden">
-            <Button variant="outline" size="icon" className="mr-2">
-              <Search className="h-4 w-4" />
-              <span className="sr-only">Search</span>
-            </Button>
-          </div>
+
           <ThemeToggle />
 
           {!loading && user && (

@@ -16,6 +16,7 @@ export interface Document {
     key_topics?: string[];
     document_type?: string;
     action_items?: string[];
+    file_url?: string;
 }
 
 export interface ChatSource {

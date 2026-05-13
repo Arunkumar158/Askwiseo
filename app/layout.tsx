@@ -1,7 +1,9 @@
 import type React from "react"
 import "@/app/globals.css"
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import { Inter, JetBrains_Mono } from "next/font/google"
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { ThemeProvider } from "@/components/theme-provider"
 import { Header } from "@/components/header"
 import { SiteFooter } from "@/components/site-footer"
@@ -17,6 +19,12 @@ const inter = Inter({
   subsets: ["latin"],
   display: 'swap',
   variable: '--font-inter',
+})
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  display: 'swap',
+  variable: '--font-jetbrains-mono',
 })
 
 export const viewport: Viewport = {
@@ -72,10 +80,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body className={inter.className}>
+    <html 
+      lang="en" 
+      suppressHydrationWarning 
+      className={`${GeistSans.variable} ${GeistMono.variable} ${jetbrainsMono.variable} ${inter.variable}`}
+    >
+      <body className={GeistSans.className}>
         <AuthProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
             <SidebarProvider>
               <LayoutContent>{children}</LayoutContent>
               <FeedbackButton />

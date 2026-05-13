@@ -24,58 +24,62 @@ export function UploadSection({ className, ...props }: UploadSectionProps) {
   })
 
   return (
-    <Card className={cn("rounded-2xl shadow-sm transition-transform duration-200 hover:scale-[1.02]", className)} {...props}>
-      <CardHeader>
-        <CardTitle>Upload Documents</CardTitle>
-        <CardDescription>Drag and drop your PDFs to convert them into searchable knowledge</CardDescription>
+    <Card className={cn("border border-white/5 bg-[#121212]/40 backdrop-blur-xl rounded-3xl overflow-hidden group transition-all duration-300 hover:border-violet-500/30", className)} {...props}>
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-bold font-sans tracking-tight">Intelligence Ingestion</CardTitle>
+        <CardDescription className="font-inter text-zinc-500">Drag and drop your PDFs to expand your searchable knowledge base.</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="flex flex-col items-center justify-center gap-4">
-          <div
-            {...getRootProps()}
-            className={cn(
-              "flex h-[180px] w-full cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/25 bg-muted/50 px-4 py-8 text-center transition-colors hover:border-violet-300 hover:bg-muted",
-              isDragActive && "border-violet-400 bg-violet-50/10"
-            )}
-          >
-            <input {...getInputProps()} />
-            <div className="flex flex-col items-center justify-center gap-2">
-              <div className="rounded-full bg-violet-100 p-3">
-                {uploading
-                  ? <Loader2 className="h-6 w-6 text-violet-600 animate-spin" />
-                  : <Upload className="h-6 w-6 text-violet-600" />
-                }
-              </div>
-              <div className="flex flex-col gap-1">
-                {uploading ? (
-                  <p className="font-medium text-violet-600">{uploadProgress}</p>
-                ) : (
-                  <>
-                    <p className="font-medium">Drag & drop PDFs here or click to browse</p>
-                    <p className="text-sm text-muted-foreground">Support for PDF files up to 50MB</p>
-                  </>
-                )}
-              </div>
+      <CardContent className="space-y-6">
+        <div
+          {...getRootProps()}
+          className={cn(
+            "flex flex-col items-center justify-center p-10 text-center cursor-pointer rounded-[2rem] border-2 border-dashed border-white/5 transition-all duration-300 relative overflow-hidden",
+            isDragActive ? "bg-violet-500/10 border-violet-500/50" : "hover:bg-white/[0.02]"
+          )}
+        >
+          <input {...getInputProps()} />
+          
+          <div className="relative mb-4 group-hover:scale-110 transition-transform duration-300">
+            <div className="absolute inset-0 bg-violet-500/20 blur-xl rounded-full" />
+            <div className="relative w-14 h-14 rounded-2xl bg-[#050505] border border-white/10 flex items-center justify-center shadow-premium-glow">
+              {uploading ? (
+                <Loader2 className="h-6 w-6 text-violet-400 animate-spin" />
+              ) : (
+                <Upload className="h-6 w-6 text-violet-400" />
+              )}
             </div>
           </div>
-
-          <div className="flex w-full flex-col sm:flex-row gap-2">
-            <Button
-              className="w-full gap-2 bg-violet-600 hover:bg-violet-700 active:scale-95 transition-transform"
-              disabled={uploading}
-              onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
-            >
-              <FileText className="h-4 w-4" />
-              {uploading ? "Uploading..." : "Select Files"}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full active:scale-95 transition-transform"
-              onClick={() => router.push("/uploads")}
-            >
-              Browse Library
-            </Button>
+          
+          <div className="space-y-1">
+            {uploading ? (
+              <p className="text-lg font-bold text-violet-400 font-mono animate-pulse">{uploadProgress}</p>
+            ) : (
+              <>
+                <p className="font-semibold text-white font-sans">
+                  {isDragActive ? "Release to Index" : "Drag & drop PDF"}
+                </p>
+                <p className="text-xs text-zinc-500 font-inter">PDF files up to 50MB</p>
+              </>
+            )}
           </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button
+            className="flex-1 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-700 text-white font-bold shadow-premium-glow hover:scale-[1.02] active:scale-95 transition-all"
+            disabled={uploading}
+            onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            {uploading ? "Ingesting..." : "Select Files"}
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 h-12 rounded-2xl border-white/5 bg-white/5 hover:bg-white/10 text-white font-semibold transition-all"
+            onClick={() => router.push("/uploads")}
+          >
+            Browse Library
+          </Button>
         </div>
       </CardContent>
     </Card>

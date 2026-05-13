@@ -16,7 +16,9 @@ if not firebase_admin._apps:
         print(f"Service account not found at: {service_account_path}, using ApplicationDefault")
         cred = credentials.ApplicationDefault()
     
-    firebase_admin.initialize_app(cred)
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': 'askwiseo.firebasestorage.app'
+    })
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
     if not authorization.startswith("Bearer "):

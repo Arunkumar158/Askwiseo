@@ -2,8 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,23 +59,8 @@ export function SiteHeader() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-2">
           <SidebarToggle />
-          <div className="hidden md:flex md:flex-1">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search documents..."
-                className="w-full rounded-full bg-muted pl-8 md:w-[300px] lg:w-[400px]"
-              />
-            </div>
-          </div>
         </div>
-        <div className="flex md:hidden">
-          <Button variant="outline" size="icon" className="mr-2">
-            <Search className="h-4 w-4" />
-            <span className="sr-only">Search</span>
-          </Button>
-        </div>
+
         <div className="flex items-center gap-4">
           <ThemeToggle />
           <NotificationButton notifications={notifications} />

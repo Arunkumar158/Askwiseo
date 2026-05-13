@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import {
   FileText, TrendingUp, AlertCircle, Tag,
-  BarChart3, Clock, Layers, BookOpen, Loader2
+  BarChart3, Clock, Layers, BookOpen, Loader2, Sparkles
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import { cn } from "@/lib/utils";
 
 export default function InsightsPage() {
   const { documents, loading, formatFileSize } = useDocuments();
@@ -47,158 +48,128 @@ export default function InsightsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
+        <Loader2 className="h-12 w-12 animate-spin text-violet-500" />
+        <p className="text-zinc-500 font-mono text-xs tracking-widest uppercase">Synthesizing Analytics...</p>
       </div>
     );
   }
 
   if (documents.length === 0) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <BarChart3 className="h-16 w-16 mb-4 text-muted-foreground opacity-30" />
-          <h2 className="text-2xl font-bold mb-2">No insights yet</h2>
-          <p className="text-muted-foreground mb-6">
-            Upload your business documents to see AI-generated insights
-          </p>
-          <Button onClick={() => router.push("/uploads")}>Upload Documents</Button>
+      <div className="container mx-auto px-4 py-24 text-center">
+        <div className="w-24 h-24 bg-[#121212] rounded-[2rem] border border-white/5 flex items-center justify-center mx-auto mb-8 shadow-premium-glow">
+          <BarChart3 className="h-12 w-12 text-zinc-700" />
         </div>
+        <h2 className="text-3xl font-bold text-white mb-3 font-sans">No intelligence gathered yet</h2>
+        <p className="text-zinc-500 max-w-md mx-auto mb-8 text-lg font-inter">
+          Your insights dashboard will populate once you upload and index your first documents.
+        </p>
+        <Button 
+          onClick={() => router.push("/uploads")}
+          className="rounded-full px-8 h-12 bg-violet-600 hover:bg-violet-500 shadow-premium-glow"
+        >
+          Upload Knowledge
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Document Insights</h1>
-        <p className="text-muted-foreground">
-          AI-generated analytics across all your business documents
-        </p>
+    <div className="container mx-auto px-4 py-8 md:py-12 space-y-12 bg-[#050505]">
+      {/* Header */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight font-sans">Strategic Insights</h1>
+        <p className="text-zinc-500 text-lg font-inter">AI-distilled intelligence across your entire knowledge repository.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="h-5 w-5 text-blue-600" />
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { label: "Total Assets", value: documents.length, icon: FileText, color: "text-blue-400", bg: "bg-blue-400/10" },
+          { label: "Analyzed Pages", value: analytics.totalPages, icon: BookOpen, color: "text-violet-400", bg: "bg-violet-400/10" },
+          { label: "Knowledge Units", value: analytics.totalChunks, icon: Layers, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+          { label: "Data Volume", value: formatFileSize(analytics.totalSize), icon: TrendingUp, color: "text-amber-400", bg: "bg-amber-400/10" },
+        ].map((stat, i) => (
+          <Card key={i} className="border border-white/5 bg-[#121212]/40 backdrop-blur-md rounded-3xl overflow-hidden hover:border-white/10 transition-colors">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className={cn("p-3 rounded-2xl", stat.bg)}>
+                  <stat.icon className={cn("h-6 w-6", stat.color)} />
+                </div>
+                <div className="h-1 w-12 bg-white/5 rounded-full" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{documents.length}</p>
-                <p className="text-xs text-muted-foreground">Documents</p>
+                <p className="text-2xl font-bold text-white font-sans">{stat.value}</p>
+                <p className="text-xs font-mono tracking-widest text-zinc-500 uppercase mt-1">{stat.label}</p>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <BookOpen className="h-5 w-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{analytics.totalPages}</p>
-                <p className="text-xs text-muted-foreground">Total Pages</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Layers className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{analytics.totalChunks}</p>
-                <p className="text-xs text-muted-foreground">Knowledge Chunks</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{formatFileSize(analytics.totalSize)}</p>
-                <p className="text-xs text-muted-foreground">Total Storage</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-4">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <FileText className="h-5 w-5" /> Document Summaries
-          </h2>
-          <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content - Summaries */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-white flex items-center gap-3 font-sans">
+              <Sparkles className="h-5 w-5 text-violet-400" />
+              Intelligence Summaries
+            </h2>
+            <Button variant="ghost" size="sm" className="text-xs text-zinc-500 hover:text-white">View all</Button>
+          </div>
+          
+          <div className="space-y-4">
             {documents.map((doc) => (
-              <Card key={doc.id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap mb-2">
-                        <h3 className="font-medium text-sm truncate">{doc.filename}</h3>
-                        {doc.document_type && (
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {doc.document_type}
-                          </Badge>
-                        )}
+              <Card key={doc.id} className="border border-white/5 bg-[#121212]/40 backdrop-blur-md rounded-3xl overflow-hidden group hover:border-violet-500/30 transition-all duration-300">
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
+                    <div className="flex-1 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#050505] border border-white/5 flex items-center justify-center shrink-0">
+                          <FileText className="w-5 h-5 text-violet-400" />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-white group-hover:text-violet-400 transition-colors">{doc.filename}</h3>
+                          <p className="text-[10px] text-zinc-600 font-mono uppercase tracking-wider">{doc.document_type || "General Document"}</p>
+                        </div>
                       </div>
+                      
                       {doc.summary ? (
-                        <p className="text-sm text-muted-foreground leading-relaxed">
+                        <p className="text-sm text-zinc-400 leading-relaxed font-inter">
                           {doc.summary}
                         </p>
                       ) : (
-                        <p className="text-sm text-muted-foreground italic">
-                          No summary available — re-upload to generate insights
+                        <p className="text-sm text-zinc-600 italic font-inter">
+                          No intelligence report generated. Re-index to analyze.
                         </p>
                       )}
+
                       {doc.key_topics && doc.key_topics.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-3">
-                          {doc.key_topics.map((topic) => (
-                            <Badge key={topic} variant="secondary" className="text-xs">
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {doc.key_topics.slice(0, 5).map((topic) => (
+                            <Badge key={topic} variant="outline" className="bg-white/5 border-white/5 text-zinc-500 text-[10px] py-0.5 rounded-full">
                               {topic}
                             </Badge>
                           ))}
                         </div>
                       )}
-                      {doc.action_items && doc.action_items.length > 0 && (
-                        <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-950/20 rounded-lg">
-                          <p className="text-xs font-medium text-amber-700 dark:text-amber-400 mb-1">
-                            ⚠️ Action Items
-                          </p>
-                          {doc.action_items.slice(0, 2).map((item, i) => (
-                            <p key={i} className="text-xs text-amber-600 dark:text-amber-500">
-                              • {item}
-                            </p>
-                          ))}
-                        </div>
-                      )}
-                      <div className="flex items-center gap-3 mt-3 text-xs text-muted-foreground">
-                        <span>{doc.page_count} pages</span>
-                        <span>•</span>
-                        <span>{formatFileSize(doc.file_size_bytes)}</span>
-                        <span>•</span>
-                        <span>
-                          {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
-                        </span>
-                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => router.push(`/search?doc=${doc.id}`)}
-                    >
-                      Ask AI
-                    </Button>
+                    
+                    <div className="flex flex-col gap-3 min-w-[140px]">
+                       <Button 
+                         size="sm" 
+                         className="w-full rounded-xl bg-violet-600 hover:bg-violet-500 h-10 font-semibold"
+                         onClick={() => router.push(`/search?doc=${doc.id}`)}
+                       >
+                         Query AI
+                       </Button>
+                       <div className="flex items-center justify-between px-2 text-[10px] font-mono text-zinc-600">
+                         <span>{doc.page_count}p</span>
+                         <span className="w-1 h-1 rounded-full bg-zinc-800" />
+                         <span>{formatFileSize(doc.file_size_bytes)}</span>
+                       </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -206,98 +177,72 @@ export default function InsightsPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {Object.keys(analytics.typeCount).length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" /> Document Types
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {Object.entries(analytics.typeCount).map(([type, count]) => (
-                  <div key={type} className="flex items-center justify-between">
-                    <span className="text-sm">{type}</span>
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="h-2 bg-blue-500 rounded-full"
-                        style={{ width: `${(count / documents.length) * 80}px` }}
-                      />
-                      <span className="text-xs text-muted-foreground w-4">{count}</span>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          {analytics.topTopics.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <Tag className="h-4 w-4" /> Top Topics
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Extracted across all documents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap gap-2">
-                  {analytics.topTopics.map((topic) => (
-                    <Badge
-                      key={topic}
-                      variant="secondary"
-                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors text-xs"
-                      onClick={() => router.push(`/search?q=${encodeURIComponent(topic)}`)}
-                    >
-                      {topic}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {analytics.allActionItems.length > 0 && (
-            <Card className="border-amber-200 dark:border-amber-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                  <AlertCircle className="h-4 w-4" /> Action Items
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Deadlines and tasks detected by AI
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {analytics.allActionItems.slice(0, 5).map((item, i) => (
-                  <div key={i} className="text-xs">
-                    <p className="text-amber-700 dark:text-amber-400 font-medium">
-                      • {item.item}
-                    </p>
-                    <p className="text-muted-foreground mt-0.5 truncate">
-                      From: {item.filename}
-                    </p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Clock className="h-4 w-4" /> Recent Activity
+        {/* Sidebar Analytics */}
+        <div className="space-y-8">
+          {/* Topics Cloud */}
+          <Card className="border border-white/5 bg-[#121212]/40 backdrop-blur-md rounded-3xl overflow-hidden">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest font-sans flex items-center gap-2">
+                <Tag className="h-4 w-4" /> Global Topics
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {documents.slice(0, 5).map((doc) => (
-                <div key={doc.id} className="flex items-center gap-2 text-xs">
-                  <FileText className="h-3 w-3 text-muted-foreground shrink-0" />
-                  <div className="min-w-0">
-                    <p className="truncate font-medium">{doc.filename}</p>
-                    <p className="text-muted-foreground">
-                      {formatDistanceToNow(new Date(doc.created_at), { addSuffix: true })}
+            <CardContent>
+              <div className="flex flex-wrap gap-2">
+                {analytics.topTopics.map((topic) => (
+                  <button
+                    key={topic}
+                    className="px-3 py-1.5 rounded-xl bg-white/5 border border-white/5 text-xs text-zinc-400 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-white transition-all font-inter"
+                    onClick={() => router.push(`/search?q=${encodeURIComponent(topic)}`)}
+                  >
+                    {topic}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Critical Items */}
+          {analytics.allActionItems.length > 0 && (
+            <Card className="border border-amber-500/20 bg-amber-500/5 backdrop-blur-md rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(245,158,11,0.05)]">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-sm font-bold text-amber-500 uppercase tracking-widest font-sans flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" /> Detected Actions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {analytics.allActionItems.slice(0, 5).map((item, i) => (
+                  <div key={i} className="group cursor-pointer">
+                    <p className="text-sm text-zinc-200 font-medium group-hover:text-amber-400 transition-colors leading-snug">
+                      • {item.item}
                     </p>
+                    <p className="text-[10px] text-zinc-600 font-mono mt-1 uppercase tracking-tight truncate">
+                      REF: {item.filename}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Classification */}
+          <Card className="border border-white/5 bg-[#121212]/40 backdrop-blur-md rounded-3xl overflow-hidden">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-sm font-bold text-zinc-400 uppercase tracking-widest font-sans flex items-center gap-2">
+                <Layers className="h-4 w-4" /> Classification
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {Object.entries(analytics.typeCount).map(([type, count]) => (
+                <div key={type} className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-400 font-medium">{type}</span>
+                    <span className="text-zinc-600 font-mono">{count} assets</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-violet-500 to-indigo-600 rounded-full shadow-[0_0_10px_rgba(139,92,246,0.3)]"
+                      style={{ width: `${(count / documents.length) * 100}%` }}
+                    />
                   </div>
                 </div>
               ))}

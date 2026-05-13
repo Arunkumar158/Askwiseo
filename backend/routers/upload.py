@@ -5,12 +5,25 @@ from services.vector_store import store_chunks
 from services.db_service import create_document_record, get_document_by_hash, count_user_documents
 from services.ai_service import generate_document_summary
 from config import settings
+from firebase_admin import storage
 import hashlib
+import uuid
+import traceback
+import datetime
 
 router = APIRouter()
 
 @router.post("/upload")
-async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_current_user)):  # noqa: E501
+    try:
+        return await _upload_pdf_impl(file, user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        traceback.print_exc()  # prints full stack trace to uvicorn terminal
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+async def _upload_pdf_impl(file: UploadFile, user: dict):
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF files are accepted.")
     file_bytes = await file.read()
@@ -18,6 +31,7 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
         raise HTTPException(status_code=413, detail=f"File exceeds {settings.MAX_FILE_SIZE_MB}MB limit.")
     if len(file_bytes) == 0:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+    
     # Calculate MD5 hash for duplicate detection
     file_hash = hashlib.md5(file_bytes).hexdigest()
     
@@ -31,7 +45,7 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
             "is_duplicate": True
         }
 
-    # Plan Limits Check: Reject if user has 10 or more documents
+    # Plan Limits Check
     doc_count = count_user_documents(user["uid"])
     if doc_count >= 10:
         raise HTTPException(
@@ -39,12 +53,33 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
             detail=f"Free plan limit reached. You have uploaded {doc_count} PDFs. Please upgrade to Pro for unlimited uploads."
         )
 
+    # Generate document ID and upload to Storage (Optional)
+    doc_id = str(uuid.uuid4())
+    file_url = None
+    
+    try:
+        bucket = storage.bucket()
+        blob = bucket.blob(f"uploads/{user['uid']}/{doc_id}.pdf")
+        blob.upload_from_string(file_bytes, content_type="application/pdf")
+        
+        # generate_signed_url works with uniform bucket-level access (make_public does not)
+        file_url = blob.generate_signed_url(
+            expiration=datetime.timedelta(days=365),
+            method="GET",
+            version="v4",
+        )
+    except Exception as e:
+        print(f"WARNING: Firebase Storage upload failed (pipeline continuing): {str(e)}")
+        # We continue without file_url - the indexing and record creation will still work.
+
     try:
         text = extract_text_from_pdf(file_bytes)
     except Exception as e:
         raise HTTPException(status_code=422, detail=f"Could not parse PDF: {str(e)}")
+    
     if not text.strip():
         raise HTTPException(status_code=422, detail="PDF has no extractable text (image-only PDF not supported).")
+    
     page_count = get_page_count(file_bytes)
     chunks = chunk_text(text)
     filename = file.filename or "document.pdf"
@@ -63,6 +98,8 @@ async def upload_pdf(file: UploadFile = File(...), user: dict = Depends(get_curr
         key_topics=insights.get("key_topics", []),
         document_type=insights.get("document_type", "Other"),
         action_items=insights.get("action_items", []),
+        file_url=file_url,
+        doc_id=doc_id,
     )
     try:
         store_chunks(document_id=doc_record["id"], user_id=user["uid"],

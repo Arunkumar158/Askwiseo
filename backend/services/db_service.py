@@ -22,9 +22,12 @@ def create_document_record(
     key_topics: list = [],
     document_type: str = "Other",
     action_items: list = [],
+    file_url: str = "",
+    doc_id: str = None,
 ) -> Dict[str, Any]:
     db = get_db()
-    doc_id = str(uuid.uuid4())
+    if not doc_id:
+        doc_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     data = {
         "id": doc_id,
@@ -39,6 +42,7 @@ def create_document_record(
         "key_topics": key_topics,
         "document_type": document_type,
         "action_items": action_items,
+        "file_url": file_url,
         "created_at": now,
         "updated_at": now,
     }

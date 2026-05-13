@@ -22,10 +22,15 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  transpilePackages: ["react-pdf"],
   experimental: {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+  },
+  webpack: (config) => {
+    config.resolve.alias.canvas = false;
+    return config;
   },
 }
 

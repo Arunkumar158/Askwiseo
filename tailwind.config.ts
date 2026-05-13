@@ -18,6 +18,11 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-geist-sans)", "ui-sans-serif", "system-ui"],
+        mono: ["var(--font-jetbrains-mono)", "ui-monospace", "SFMono-Regular"],
+        inter: ["var(--font-inter)", "ui-sans-serif", "system-ui"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -79,6 +84,9 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
         "2xl": "1rem",
+      },
+      boxShadow: {
+        'premium-glow': '0 0 40px rgba(139, 92, 246, 0.15)',
       },
       keyframes: {
         "accordion-down": {
