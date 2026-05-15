@@ -1,0 +1,9 @@
+.env
+.env.*
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+firebase-service-account.json
+chroma_db/

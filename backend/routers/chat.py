@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from auth import get_current_user
 from services.ai_service import generate_answer
-from services.db_service import save_chat_message, get_chat_history, get_user_plan, increment_question_count
+from services.db_service import save_chat_message, get_chat_history, get_user_plan, get_question_count_today, increment_questions_today
 
 router = APIRouter()
 
@@ -18,10 +18,11 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Question cannot be empty.")
     user_id = user["uid"]
     
+    questions_today = get_question_count_today(user_id)
     plan = get_user_plan(user_id)
-    if plan.get("plan") in ["free", "starter"]:
-        if plan.get("questions_today", 0) >= plan.get("questions_limit", 20):
-            raise HTTPException(status_code=403, detail="Daily question limit reached. Please upgrade your plan for unlimited questions.")
+    
+    if questions_today >= plan.get("questions_limit", 20):
+        raise HTTPException(status_code=403, detail="Daily question limit reached. Upgrade your plan for more questions.")
             
     history = get_chat_history(user_id=user_id, document_id=body.document_id, limit=6) if body.include_history else []
     result = generate_answer(question=body.question, user_id=user_id,
@@ -29,7 +30,7 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
     saved = save_chat_message(user_id=user_id, document_id=body.document_id,
                               question=body.question, answer=result["answer"], sources=result["sources"])
     
-    increment_question_count(user_id)
+    increment_questions_today(user_id)
     
     return {"answer": result["answer"], "sources": result["sources"], "chat_id": saved["id"]}
 

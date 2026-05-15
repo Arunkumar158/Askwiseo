@@ -172,10 +172,10 @@ def get_user_plan(user_id: str) -> Dict[str, Any]:
             "pdf_limit": 10,
             "questions_limit": 20,
             "questions_today": 0,
-            "storage_limit_bytes": 52428800,
-            "last_question_date": now[:10],
-            "billing_cycle_start": now,
-            "razorpay_subscription_id": None
+            "storage_limit_bytes": 5242880,
+            "paypal_subscription_id": "",
+            "created_at": now,
+            "last_question_date": now[:10]
         }
         db.collection("user_plans").document(user_id).set(default_plan)
         return default_plan
@@ -185,18 +185,20 @@ def update_user_plan(user_id: str, updates: Dict[str, Any]) -> None:
     db = get_db()
     db.collection("user_plans").document(user_id).set(updates, merge=True)
 
-def increment_question_count(user_id: str) -> None:
+def get_question_count_today(user_id: str) -> int:
     plan = get_user_plan(user_id)
     today = datetime.now(timezone.utc).isoformat()[:10]
     
     if plan.get("last_question_date") != today:
-        updates = {
-            "questions_today": 1,
+        update_user_plan(user_id, {
+            "questions_today": 0,
             "last_question_date": today
-        }
-    else:
-        updates = {
-            "questions_today": plan.get("questions_today", 0) + 1
-        }
-    
-    update_user_plan(user_id, updates)
+        })
+        return 0
+    return plan.get("questions_today", 0)
+
+def increment_questions_today(user_id: str) -> None:
+    current_count = get_question_count_today(user_id)
+    update_user_plan(user_id, {
+        "questions_today": current_count + 1
+    })

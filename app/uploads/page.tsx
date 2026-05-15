@@ -81,9 +81,14 @@ export default function UploadsPage() {
           <p className="text-zinc-500 mt-2 text-lg font-inter">Securely manage and index your business intelligence.</p>
         </div>
         {plan && (
-          <Badge variant="outline" className="px-4 py-1.5 rounded-full border-white/10 bg-white/5 text-zinc-400 font-mono text-[11px]">
-            {plan.plan.toUpperCase()} • {plan.pdf_count}/{plan.pdf_limit === 999999 ? "∞" : plan.pdf_limit} DOCUMENTS
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant="outline" className="px-4 py-1.5 rounded-full border-white/10 bg-white/5 text-zinc-400 font-mono text-[11px]">
+              {plan.plan.toUpperCase()} PLAN
+            </Badge>
+            <span className="text-[10px] text-zinc-500 font-mono uppercase">
+              {plan.pdf_count}/{plan.pdf_limit === 999999 ? "∞" : plan.pdf_limit} PDFs used
+            </span>
+          </div>
         )}
       </div>
 

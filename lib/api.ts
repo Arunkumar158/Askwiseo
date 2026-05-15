@@ -71,7 +71,7 @@ async function getAuthHeaders(): Promise<HeadersInit> {
     }
 }
 
-async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const authHeaders = await getAuthHeaders();
     const response = await fetch(`${BASE_URL}${path}`, {
         ...options,

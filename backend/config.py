@@ -16,6 +16,11 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
     RAZORPAY_WEBHOOK_SECRET: str = ""
+    PAYPAL_CLIENT_ID: str = ""
+    PAYPAL_SECRET: str = ""
+    PAYPAL_MODE: str = "sandbox"
+    PAYPAL_STARTER_PLAN_ID: str = ""
+    PAYPAL_PRO_PLAN_ID: str = ""
 
     class Config:
         env_file = ".env"
