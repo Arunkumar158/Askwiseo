@@ -1,9 +1,16 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 
 class Settings(BaseSettings):
-    GEMINI_API_KEY: str
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    GEMINI_API_KEY: str = ""
     FIREBASE_SERVICE_ACCOUNT_PATH: str = "firebase-service-account.json"
+    FIREBASE_SERVICE_ACCOUNT_JSON: str = ""
     CHROMA_PERSIST_DIR: str = "./chroma_db"
     CHROMA_COLLECTION_NAME: str = "askwiseo_docs"
     ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001", "https://askwiseo.vercel.app"]
@@ -24,8 +31,5 @@ class Settings(BaseSettings):
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
-
-    class Config:
-        env_file = ".env"
 
 settings = Settings()

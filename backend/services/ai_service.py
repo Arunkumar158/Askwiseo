@@ -18,6 +18,8 @@ def build_context(chunks: List[Dict[str, Any]]) -> str:
     return "\n\n---\n\n".join(parts)
 
 def generate_answer(question: str, user_id: str, document_id=None, chat_history=None):
+    if not settings.GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not set")
     genai.configure(api_key=settings.GEMINI_API_KEY)
 
     chunks = retrieve_chunks(query=question, user_id=user_id, document_id=document_id)
@@ -66,6 +68,8 @@ def generate_document_summary(filename: str, text: str) -> dict:
     Generate a summary and extract key topics from document text.
     Called automatically after PDF upload.
     """
+    if not settings.GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not set")
     genai.configure(api_key=settings.GEMINI_API_KEY)
     
     # Use first 3000 chars for summary (cost efficient)

@@ -27,8 +27,8 @@ RUN pip install pydantic-settings==2.2.1
 RUN pip install firebase-admin==6.5.0
 RUN pip install google-generativeai==0.5.4
 RUN pip install PyMuPDF==1.24.3
-RUN pip install "numpy<2.0.0"
-RUN pip install chromadb==0.4.24
+RUN pip install "numpy==1.26.4"
+RUN pip install chromadb==0.5.23
 RUN pip install paypalrestsdk==1.13.3
 RUN pip install cloudinary==1.40.0
 

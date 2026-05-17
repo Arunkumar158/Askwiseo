@@ -8,6 +8,8 @@ _chroma_client = None
 _collection = None
 
 def _init_genai():
+    if not settings.GEMINI_API_KEY:
+        raise ValueError("GEMINI_API_KEY is not set")
     genai.configure(api_key=settings.GEMINI_API_KEY)
 
 def get_chroma_collection():

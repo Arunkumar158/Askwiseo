@@ -8,6 +8,8 @@ _db = None
 def get_db():
     global _db
     if _db is None:
+        from auth import _init_firebase
+        _init_firebase()
         _db = firestore.client()
     return _db
 
