@@ -5,11 +5,13 @@ from services.vector_store import store_chunks
 from services.db_service import create_document_record, get_document_by_hash, count_user_documents
 from services.ai_service import generate_document_summary
 from config import settings
-from firebase_admin import storage
+import cloudinary
+import cloudinary.uploader
 import hashlib
 import uuid
 import traceback
 import datetime
+import io
 
 router = APIRouter()
 
@@ -53,23 +55,31 @@ async def _upload_pdf_impl(file: UploadFile, user: dict):
             detail=f"Free plan limit reached. You have uploaded {doc_count} PDFs. Please upgrade to Pro for unlimited uploads."
         )
 
-    # Generate document ID and upload to Storage (Optional)
+    # Generate document ID and upload to Cloudinary (Optional)
     doc_id = str(uuid.uuid4())
     file_url = None
     
     try:
-        bucket = storage.bucket()
-        blob = bucket.blob(f"uploads/{user['uid']}/{doc_id}.pdf")
-        blob.upload_from_string(file_bytes, content_type="application/pdf")
-        
-        # generate_signed_url works with uniform bucket-level access (make_public does not)
-        file_url = blob.generate_signed_url(
-            expiration=datetime.timedelta(days=365),
-            method="GET",
-            version="v4",
-        )
+        # Initialize Cloudinary if credentials exist
+        if settings.CLOUDINARY_CLOUD_NAME and settings.CLOUDINARY_API_KEY:
+            cloudinary.config(
+                cloud_name=settings.CLOUDINARY_CLOUD_NAME,
+                api_key=settings.CLOUDINARY_API_KEY,
+                api_secret=settings.CLOUDINARY_API_SECRET,
+                secure=True
+            )
+            
+            response = cloudinary.uploader.upload(
+                io.BytesIO(file_bytes),
+                resource_type="raw",
+                public_id=f"{doc_id}.pdf",
+                folder=f"askwiseo/uploads/{user['uid']}"
+            )
+            file_url = response.get("secure_url")
+        else:
+            print("WARNING: Cloudinary credentials not configured. Skipping upload.")
     except Exception as e:
-        print(f"WARNING: Firebase Storage upload failed (pipeline continuing): {str(e)}")
+        print(f"WARNING: Cloudinary upload failed (pipeline continuing): {str(e)}")
         # We continue without file_url - the indexing and record creation will still work.
 
     try:

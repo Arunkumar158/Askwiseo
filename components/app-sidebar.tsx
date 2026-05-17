@@ -37,12 +37,6 @@ const items = [
     url: "/insights",
     icon: BarChart2,
   },
-
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
-  },
 ]
 
 export function AppSidebar() {
@@ -50,28 +44,21 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="border-r border-white/5 bg-[#121212]/80 backdrop-blur-xl">
-      <SidebarHeader className="flex items-center justify-between px-6 py-8">
-        <Link href="/" className="flex items-center gap-3 group transition-transform duration-300 hover:scale-105">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 text-white shadow-premium-glow group-hover:shadow-[0_0_30px_rgba(139,92,246,0.5)] transition-all duration-300">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-5 w-5"
-            >
-              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-5 0v-15A2.5 2.5 0 0 1 9.5 2Z" />
-              <path d="M14.5 8A2.5 2.5 0 0 1 17 10.5v9a2.5 2.5 0 0 1-5 0v-9A2.5 2.5 0 0 1 14.5 8Z" />
-              <path d="M19.5 14a2.5 2.5 0 0 1 2.5 2.5v3a2.5 2.5 0 0 1-5 0v-3A2.5 2.5 0 0 1 19.5 14Z" />
-            </svg>
+      <SidebarHeader className="px-6 pt-6 pb-2">
+        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+          <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
+            <img 
+              src="/logo.png" 
+              alt="Askwiseo Logo" 
+              className="w-full h-full object-contain"
+            />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white font-sans">Askwiseo</span>
+          <span className="font-bold text-xl tracking-tight text-white font-sans bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+            Askwiseo
+          </span>
         </Link>
       </SidebarHeader>
-      <SidebarContent className="px-3">
+      <SidebarContent className="px-3 pt-4">
         <SidebarMenu className="space-y-1">
           {items.map((item) => (
             <SidebarMenuItem key={item.title}>
@@ -97,20 +84,49 @@ export function AppSidebar() {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="p-4 mt-auto">
-        <Button 
-          variant="ghost" 
-          className="w-full flex items-center justify-start gap-3 rounded-xl h-14 bg-white/[0.02] hover:bg-white/[0.05] border border-white/5 transition-all duration-200"
-        >
-          <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-zinc-700 to-zinc-800 flex items-center justify-center border border-white/10">
-            <User2 className="h-4 w-4 text-zinc-300" />
-          </div>
-          <div className="flex flex-col items-start overflow-hidden">
-            <span className="font-medium text-sm text-white font-sans">Profile</span>
-            <span className="text-[10px] text-zinc-500 font-mono truncate w-full">Free Plan</span>
-          </div>
-          <ChevronDown className="ml-auto h-4 w-4 text-zinc-500" />
-        </Button>
+      <SidebarFooter className="p-3 mt-auto space-y-1">
+        <SidebarMenu className="space-y-1">
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              asChild 
+              isActive={pathname === "/settings"} 
+              tooltip="Settings"
+              className={`flex items-center gap-3 px-4 py-6 rounded-xl transition-all duration-200 group ${
+                pathname === "/settings" 
+                  ? "bg-white/[0.05] text-white shadow-premium-glow border border-white/10" 
+                  : "text-zinc-400 hover:text-white hover:bg-white/[0.03]"
+              }`}
+            >
+              <Link href="/settings">
+                <Settings className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${pathname === "/settings" ? "text-violet-400" : ""}`} />
+                <span className="font-medium font-sans">Settings</span>
+                {pathname === "/settings" && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                )}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton 
+              asChild 
+              isActive={pathname === "/profile"} 
+              tooltip="Profile"
+              className={`flex items-center gap-3 px-4 py-6 rounded-xl transition-all duration-200 group ${
+                pathname === "/profile" 
+                  ? "bg-white/[0.05] text-white shadow-premium-glow border border-white/10" 
+                  : "text-zinc-400 hover:text-white hover:bg-white/[0.03]"
+              }`}
+            >
+              <Link href="/profile">
+                <User2 className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${pathname === "/profile" ? "text-violet-400" : ""}`} />
+                <span className="font-medium font-sans">Profile</span>
+                {pathname === "/profile" && (
+                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                )}
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )

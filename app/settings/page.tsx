@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -32,12 +33,11 @@ import {
   ExternalLink,
   Plus,
   X,
-  Eye,
-  EyeOff,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDocuments } from "@/hooks/useDocuments";
+import { usePlan } from "@/hooks/usePlan";
 import { 
   updateProfile, 
   updatePassword, 
@@ -49,6 +49,7 @@ import { auth } from "@/lib/firebase";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 // Types
 interface StorageUsage {
@@ -66,7 +67,22 @@ interface Invoice {
 export default function SettingsPage() {
   const { user, logOut } = useAuth();
   const { documents, formatFileSize } = useDocuments();
+  const { plan, loading: planLoading } = usePlan();
   const router = useRouter();
+
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (planLoading) {
+      timer = setTimeout(() => {
+        setLoadingTimeout(true);
+      }, 3000);
+    } else {
+      setLoadingTimeout(false);
+    }
+    return () => clearTimeout(timer);
+  }, [planLoading]);
 
   // State with localStorage persistence
   const [darkMode, setDarkMode] = useState(() => {
@@ -99,18 +115,6 @@ export default function SettingsPage() {
     }
     return false;
   });
-  const [googleDrive, setGoogleDrive] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('googleDrive') === 'true';
-    }
-    return false;
-  });
-  const [slack, setSlack] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('slack') === 'true';
-    }
-    return false;
-  });
 
   // Form states
   const [name, setName] = useState(user?.displayName || '');
@@ -118,8 +122,6 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [deleteConfirmPassword, setDeleteConfirmPassword] = useState('');
-  const [showApiKey, setShowApiKey] = useState(false);
-  const [apiKey, setApiKey] = useState('••••••••••••••••');
   const [feedback, setFeedback] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
@@ -157,27 +159,6 @@ export default function SettingsPage() {
   useEffect(() => {
     localStorage.setItem('twoFactor', twoFactor.toString());
   }, [twoFactor]);
-
-  useEffect(() => {
-    localStorage.setItem('googleDrive', googleDrive.toString());
-  }, [googleDrive]);
-
-  useEffect(() => {
-    localStorage.setItem('slack', slack.toString());
-  }, [slack]);
-
-  // Integration handlers
-  const handleGoogleDriveToggle = () => {
-    setGoogleDrive(!googleDrive);
-    // Mock integration logic
-    console.log('Google Drive integration:', !googleDrive ? 'enabled' : 'disabled');
-  };
-
-  const handleSlackToggle = () => {
-    setSlack(!slack);
-    // Mock integration logic
-    console.log('Slack integration:', !slack ? 'enabled' : 'disabled');
-  };
 
   // Real Auth Handlers
   const handleSaveProfile = async () => {
@@ -499,36 +480,17 @@ export default function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-white">Google Drive</span>
-              <Switch
-                checked={googleDrive}
-                onCheckedChange={handleGoogleDriveToggle}
-                className="data-[state=checked]:bg-blue-600"
-              />
+              <Badge variant="secondary" className="bg-gray-800 text-gray-400 hover:bg-gray-800">Coming Soon</Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-white">Slack</span>
-              <Switch
-                checked={slack}
-                onCheckedChange={handleSlackToggle}
-                className="data-[state=checked]:bg-blue-600"
-              />
+              <Badge variant="secondary" className="bg-gray-800 text-gray-400 hover:bg-gray-800">Coming Soon</Badge>
             </div>
             <div className="bg-gray-800 p-4 rounded-lg">
-              <p className="text-white mb-2">API Key (Pro Only)</p>
-              <div className="relative">
-                <Input
-                  type={showApiKey ? "text" : "password"}
-                  value={apiKey}
-                  className="bg-gray-700 border-gray-600 text-white pr-10"
-                  disabled
-                />
-                <button
-                  onClick={() => setShowApiKey(!showApiKey)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                >
-                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
+              <p className="text-white mb-2">API Key</p>
+              <p className="text-sm text-gray-400">
+                API access is available on the Pro plan. <Link href="/pricing" className="text-blue-400 hover:underline">Upgrade to get your API key.</Link>
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -543,8 +505,14 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-gray-800 p-4 rounded-lg">
-              <p className="text-white font-medium">Current Plan: Pro</p>
-              <p className="text-sm text-gray-400">$29/month</p>
+              <p className="text-white font-medium">
+                Current Plan: {planLoading && !loadingTimeout ? "Loading..." : plan?.plan ? plan.plan.charAt(0).toUpperCase() + plan.plan.slice(1) : "Free Plan"}
+              </p>
+              <p className="text-sm text-gray-400">
+                {plan?.plan === "enterprise" ? "Custom Pricing" : 
+                 plan?.plan === "pro" ? "$17.99/month" : 
+                 plan?.plan === "starter" ? "$5.99/month" : "$0/month"}
+              </p>
             </div>
             <Button variant="outline" className="w-full">
               <CreditCard className="w-4 h-4 mr-2" />
@@ -560,8 +528,8 @@ export default function SettingsPage() {
               <Button variant="outline" className="flex-1">
                 Cancel Plan
               </Button>
-              <Button className="flex-1">
-                Upgrade to Enterprise
+              <Button className="flex-1" onClick={() => router.push("/pricing")}>
+                Upgrade Plan
               </Button>
             </div>
           </CardContent>
@@ -580,7 +548,10 @@ export default function SettingsPage() {
               <span className="text-white">Askwiseo Assistant (Beta)</span>
               <Switch
                 checked={betaAssistant}
-                onCheckedChange={setBetaAssistant}
+                onCheckedChange={(checked) => {
+                  setBetaAssistant(checked);
+                  toast("Beta features coming soon. We will notify you when they launch.");
+                }}
                 className="data-[state=checked]:bg-blue-600"
               />
             </div>
@@ -590,6 +561,14 @@ export default function SettingsPage() {
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
             />
+            <Button 
+              onClick={() => {
+                window.location.href = `mailto:askwiseo@gmail.com?subject=Askwiseo Beta Feedback&body=${encodeURIComponent(feedback)}`;
+                toast.success("Thank you for your feedback!");
+              }}
+            >
+              Submit Feedback
+            </Button>
           </CardContent>
         </Card>
 
@@ -602,19 +581,19 @@ export default function SettingsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button className="w-full">
+            <Button className="w-full" onClick={() => window.location.href = "mailto:askwiseo@gmail.com?subject=Askwiseo%20Support%20Request&body=Hi%20Askwiseo%20team%2C%20I%20need%20help%20with...."}>
               <Send className="w-4 h-4 mr-2" />
               Contact Support
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button variant="outline" className="w-full" onClick={() => window.open("https://askwiseo.notion.site", "_blank")}>
               <ExternalLink className="w-4 h-4 mr-2" />
               Visit Help Center
             </Button>
             <div className="space-y-2">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => window.open("https://forms.gle/askwiseo", "_blank")}>
                 Submit Feature Request
               </Button>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" onClick={() => window.location.href = "mailto:askwiseo@gmail.com?subject=Bug%20Report%20-%20Askwiseo&body=Bug%20description%3A%20"}>
                 Report a Bug
               </Button>
             </div>
