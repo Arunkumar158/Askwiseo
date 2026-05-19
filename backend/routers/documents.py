@@ -10,6 +10,10 @@ async def list_documents(user: dict = Depends(get_current_user)):
     docs = get_user_documents(user_id=user["uid"])
     return {"documents": docs, "count": len(docs)}
 
+@router.get("/documents/insights")
+async def get_insights(user: dict = Depends(get_current_user)):
+    return get_user_insights(user_id=user["uid"])
+
 @router.get("/documents/{document_id}")
 async def get_document_detail(document_id: str, user: dict = Depends(get_current_user)):
     doc = get_document(document_id=document_id, user_id=user["uid"])
@@ -25,7 +29,3 @@ async def delete_document(document_id: str, user: dict = Depends(get_current_use
     delete_document_chunks(document_id=document_id)
     delete_document_record(document_id=document_id, user_id=user["uid"])
     return {"success": True, "deleted_id": document_id}
-
-@router.get("/documents/insights")
-async def get_insights(user: dict = Depends(get_current_user)):
-    return get_user_insights(user_id=user["uid"])

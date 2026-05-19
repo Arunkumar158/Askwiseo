@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Loader2, BookOpen, CheckCircle2 } from "lucide-react"
+import { Loader2, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 
 export default function ForgotPasswordPage() {
@@ -30,10 +30,14 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-6">
-      <div className="flex items-center gap-2">
-        <BookOpen className="h-8 w-8 text-[#1A56DB]" />
-        <span className="text-2xl font-bold tracking-tight">Askwiseo</span>
+    <div className="flex w-full flex-col items-center gap-8">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <img
+          src="/logo.png"
+          alt="Askwiseo Logo"
+          className="h-14 w-14 object-contain"
+        />
+        <span className="text-3xl font-bold tracking-tight text-white">Askwiseo</span>
       </div>
       
       <Card className="w-full border-slate-800 bg-slate-900/50 shadow-[0_0_15px_rgba(26,86,219,0.1)] backdrop-blur-sm">

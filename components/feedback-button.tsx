@@ -1,7 +1,7 @@
 "use client";
 
 import { FeedbackModal } from "./ui/feedback-modal";
-import { auth, db } from "@/lib/firebase";
+import { auth, getDbInstance } from "@/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
 import { onAuthStateChanged } from "firebase/auth";
@@ -50,6 +50,7 @@ export function FeedbackButton() {
       };
 
       console.log("Submitting feedback to Firestore...");
+      const db = getDbInstance();
       const feedbackRef = collection(db, "feedbacks");
       const feedbackData = {
         email: user.email,

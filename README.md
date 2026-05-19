@@ -94,19 +94,36 @@ NEXT_PUBLIC_SUPABASE_URL=your_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_key
 ```
 
-### 3. Run the backend (FastAPI)
+### 3. Run the app locally
+
+The frontend calls same-origin `/api/*` routes. In development, Next.js rewrites those
+requests to the FastAPI backend at `http://127.0.0.1:8000`, so both services must run.
+
+```bash
+npm install
+npm run dev
+```
+
+This starts:
+
+- Next.js on `http://localhost:3000`
+- FastAPI on `http://127.0.0.1:8000`
+
+Make sure `backend/firebase-service-account.json` exists, or set
+`FIREBASE_SERVICE_ACCOUNT_JSON` for the backend, so plan and document data can be read
+from Firebase.
+
+### 4. Run the backend only (FastAPI)
 
 ```bash
 cd backend
-uvicorn main:app --reload
+venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-### 4. Run the frontend (Next.js)
+### 5. Run the frontend only (Next.js)
 
 ```bash
-cd frontend
-npm install
-npm run dev
+npm run dev:web
 ```
 
 ---

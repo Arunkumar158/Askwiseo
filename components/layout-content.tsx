@@ -14,11 +14,15 @@ interface LayoutContentProps {
 export function LayoutContent({ children }: LayoutContentProps) {
   const pathname = usePathname()
   const isAuthPage = pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password"
-  const isPublicPage = pathname === "/pricing" || pathname === "/contact" || pathname === "/"
+  const isPublicPage = pathname === "/pricing" || pathname === "/contact"
 
   // Auth pages bypass the entire app shell
   if (isAuthPage) {
-    return <>{children}</>
+    return (
+      <div className="flex min-h-svh w-full flex-1">
+        {children}
+      </div>
+    )
   }
 
   // Public pages (pricing, contact) keep the sidebar but skip the global header/footer

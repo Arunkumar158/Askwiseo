@@ -13,6 +13,15 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    const apiOrigin = process.env.API_PROXY_URL || "http://127.0.0.1:8000"
+    return [
+      {
+        source: "/api/:path*",
+        destination: `${apiOrigin}/api/:path*`,
+      },
+    ]
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -23,11 +32,6 @@ const nextConfig = {
     unoptimized: true,
   },
   transpilePackages: ["react-pdf"],
-  experimental: {
-    webpackBuildWorker: true,
-    parallelServerBuildTraces: true,
-    parallelServerCompiles: true,
-  },
   webpack: (config) => {
     config.resolve.alias.canvas = false;
     return config;

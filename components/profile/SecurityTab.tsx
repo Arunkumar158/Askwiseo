@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Shield, 
-  Key, 
+import {
+  Key,
   Smartphone,
   LogOut,
-  Copy
-import { useAuth } from "@/contexts/AuthContext"
+  Copy,
+} from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function SecurityTab() {
   const { logOut } = useAuth()

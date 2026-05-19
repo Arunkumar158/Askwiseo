@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
                      request.nextUrl.pathname.startsWith('/forgot-password')
 
   // List of public routes that don't need authentication
-  const publicRoutes = ['/', '/about', '/contact', '/pricing']
+  const publicRoutes = ['/about', '/contact', '/pricing']
 
   // Check if it's a static file or api route
   if (

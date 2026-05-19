@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const token = await firebaseUser.getIdToken();
+        const token = await firebaseUser.getIdToken(true);
         document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax`;
         setUser(firebaseUser);
       } else {

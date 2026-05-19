@@ -8,6 +8,8 @@ import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
+const isBrowser = typeof window !== "undefined";
+
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? "",
@@ -31,7 +33,14 @@ let authInstance: Auth | undefined;
 let dbInstance: Firestore | undefined;
 let storageInstance: FirebaseStorage | undefined;
 
-function getFirebaseApp(): FirebaseApp {
+const serverAuth = {
+  currentUser: null,
+} as unknown as Auth;
+
+export function getFirebaseApp(): FirebaseApp {
+  if (!isBrowser) {
+    throw new Error("Firebase client SDK is only available in the browser.");
+  }
   if (!isFirebaseConfigured()) {
     throw new Error(
       "Firebase is not configured. Set NEXT_PUBLIC_FIREBASE_* environment variables in Vercel (or .env.local)."
@@ -45,21 +54,30 @@ function getFirebaseApp(): FirebaseApp {
   return app;
 }
 
-function getAuthInstance(): Auth {
+export function getAuthInstance(): Auth {
+  if (!isBrowser) {
+    return serverAuth;
+  }
   if (!authInstance) {
     authInstance = getAuth(getFirebaseApp());
   }
   return authInstance;
 }
 
-function getDbInstance(): Firestore {
+export function getDbInstance(): Firestore {
+  if (!isBrowser) {
+    throw new Error("Firestore client SDK is only available in the browser.");
+  }
   if (!dbInstance) {
     dbInstance = getFirestore(getFirebaseApp());
   }
   return dbInstance;
 }
 
-function getStorageInstance(): FirebaseStorage {
+export function getStorageInstance(): FirebaseStorage {
+  if (!isBrowser) {
+    throw new Error("Firebase Storage client SDK is only available in the browser.");
+  }
   if (!storageInstance) {
     storageInstance = getStorage(getFirebaseApp());
   }

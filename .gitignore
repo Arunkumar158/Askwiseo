@@ -2,6 +2,10 @@
 
 # dependencies
 /node_modules
+package-lock.json
+
+# editor backups
+.history/
 
 # next.js
 /.next/
@@ -40,4 +44,4 @@ __pycache__/
 .env
 .env.*
 ! .env.example
-
+

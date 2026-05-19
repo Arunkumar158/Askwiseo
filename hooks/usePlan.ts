@@ -1,16 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { UserPlan, getUserPlan, apiFetch } from "@/lib/api";
-import { auth } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { useAuth } from "@/contexts/AuthContext";
 import toast from "react-hot-toast";
 
 export function usePlan() {
+    const { user, loading: authLoading } = useAuth();
     const [plan, setPlan] = useState<UserPlan | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const fetchPlan = useCallback(async () => {
-        if (!auth.currentUser) return;
+        if (!user) return;
         setLoading(true);
         try {
             const data = await getUserPlan();
@@ -21,19 +21,17 @@ export function usePlan() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [user]);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                fetchPlan();
-            } else {
-                setPlan(null);
-                setLoading(false);
-            }
-        });
-        return () => unsubscribe();
-    }, [fetchPlan]);
+        if (authLoading) return;
+        if (user) {
+            fetchPlan();
+        } else {
+            setPlan(null);
+            setLoading(false);
+        }
+    }, [user, authLoading, fetchPlan]);
 
     const startUpgrade = async (planType: string) => {
         try {
