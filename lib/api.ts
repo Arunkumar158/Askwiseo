@@ -13,7 +13,7 @@ function getBaseUrl(): string {
     if (configured) return configured.replace(/\/$/, "");
     // Same-origin /api/* is proxied to the FastAPI backend via next.config rewrites.
     if (typeof window !== "undefined") return "";
-    return process.env.API_PROXY_URL?.replace(/\/$/, "") || "http://127.0.0.1:8000";
+    return process.env.API_PROXY_URL?.replace(/\/$/, "") || "";
 }
 
 export interface Document {

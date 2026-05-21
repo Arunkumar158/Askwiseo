@@ -16,8 +16,8 @@ export function SidebarToggle() {
       variant="ghost" 
       size="icon" 
       className={cn(
-        "h-9 w-9 transition-all duration-200",
-        "hover:bg-accent active:scale-95"
+        "h-9 w-9 rounded-full transition-all duration-200",
+        "text-zinc-400 hover:text-white hover:bg-white/10 active:scale-95"
       )} 
       onClick={toggleSidebar}
       data-sidebar="trigger"

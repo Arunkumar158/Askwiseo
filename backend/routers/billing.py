@@ -36,8 +36,8 @@ async def create_sub(request: SubscriptionRequest, user: dict = Depends(get_curr
     if not plan_id:
         raise HTTPException(status_code=500, detail="PayPal Plan ID not configured for this plan")
 
-    return_url = f"{settings.ALLOWED_ORIGINS[0]}/billing/success?plan_type={plan_type}"
-    cancel_url = f"{settings.ALLOWED_ORIGINS[0]}/billing/cancel"
+    return_url = f"{settings.FRONTEND_URL}/billing/success?plan_type={plan_type}"
+    cancel_url = f"{settings.FRONTEND_URL}/billing/cancel"
     
     approval_url = create_subscription(plan_id, return_url, cancel_url)
     if not approval_url:

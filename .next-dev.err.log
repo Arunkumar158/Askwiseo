@@ -31,3 +31,139 @@ Failed to fetch `JetBrains Mono` from Google Fonts.}
  ⚠ Fast Refresh had to perform a full reload due to a runtime error.
 (node:15508) [DEP0060] DeprecationWarning: The `util._extend` API is deprecated. Please use Object.assign() instead.
 (Use `node --trace-deprecation ...` to show where the warning was created)
+ ⨯ Module not found: Error: Can't resolve 'next-flight-client-entry-loader' in 'C:\Business\Askwiseo'
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Module not found: Error: Can't resolve 'next-flight-client-entry-loader' in 'C:\Business\Askwiseo'
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+[Error: Cannot find module '@swc/helpers/package.json'
+Require stack:
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\create-compiler-aliases.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\build\webpack-config.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\dev\hot-reloader-webpack.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-utils\setup-dev-bundler.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\router-server.js
+- C:\Business\Askwiseo\node_modules\.pnpm\next@15.3.1_react-dom@19.1.0_react@19.1.0__react@19.1.0\node_modules\next\dist\server\lib\start-server.js] {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [Array]
+}
+ ⨯ Module not found: Error: Can't resolve 'next-flight-client-entry-loader' in 'C:\Business\Askwiseo'
+ ⨯ Module not found: Error: Can't resolve 'next-flight-client-entry-loader' in 'C:\Business\Askwiseo'

@@ -10,7 +10,7 @@ export function NotificationDropdown({
   notifications,
   onMarkAllAsRead,
   onNotificationClick,
-}: NotificationButtonProps) {
+}: NotificationButtonProps & { onMarkAllAsRead: () => void; onNotificationClick: (notification: Notification) => void }) {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (

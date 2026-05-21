@@ -44,4 +44,5 @@ __pycache__/
 .env
 .env.*
 ! .env.example
+chroma_db/
 

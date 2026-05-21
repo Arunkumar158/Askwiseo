@@ -227,7 +227,7 @@ export default function DocumentViewerPage({ params }: { params: Promise<{ id: s
                           navigator.clipboard.writeText(text);
                           toast.success("Intelligence Copied");
                         }}
-                        onShare={() => toast.info("Coming soon")}
+                        onShare={() => toast("Coming soon", { icon: 'ℹ️' })}
                         onThumbsUp={() => {}}
                         onThumbsDown={() => {}}
                         onRegenerate={() => sendMessage(m.content)}

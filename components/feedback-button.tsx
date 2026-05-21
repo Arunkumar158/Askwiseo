@@ -22,7 +22,7 @@ export function FeedbackButton() {
     rating: number;
     feedback: string;
     email?: string;
-  }) => {
+  }): Promise<void> => {
     try {
       if (!isAuthenticated) {
         toast.error("Please sign in to submit feedback");
@@ -49,7 +49,6 @@ export function FeedbackButton() {
         5: "🤩"
       };
 
-      console.log("Submitting feedback to Firestore...");
       const db = getDbInstance();
       const feedbackRef = collection(db, "feedbacks");
       const feedbackData = {
@@ -60,13 +59,9 @@ export function FeedbackButton() {
         userId: user.uid,
         rating: data.rating
       };
-
-      console.log("Feedback data:", feedbackData);
       
       try {
-        const docRef = await addDoc(feedbackRef, feedbackData);
-        console.log("Feedback submitted successfully with ID:", docRef.id);
-        return true;
+        await addDoc(feedbackRef, feedbackData);
       } catch (writeError: any) {
         console.error("Firestore write error:", {
           code: writeError.code,
@@ -95,4 +90,4 @@ export function FeedbackButton() {
   };
 
   return <FeedbackModal onSubmit={handleFeedbackSubmit} />;
-} 
+}

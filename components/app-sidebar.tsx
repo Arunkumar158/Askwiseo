@@ -10,10 +10,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { SidebarToggle } from "@/components/sidebar-toggle"
 
 // Menu items
 const items = [
@@ -41,22 +43,44 @@ const items = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { state, toggleSidebar } = useSidebar()
 
   return (
-    <Sidebar className="border-r border-white/5 bg-[#121212]/80 backdrop-blur-xl">
-      <SidebarHeader className="px-6 pt-6 pb-2">
-        <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
+    <Sidebar collapsible="icon" className="border-r border-white/5 bg-[#121212]/80 backdrop-blur-xl">
+      <SidebarHeader className={`transition-all duration-200 ${
+        state === "collapsed"
+          ? "px-0 pt-4 pb-2 flex items-center justify-center"
+          : "px-6 pt-6 pb-2 flex flex-row items-center justify-between"
+      }`}>
+        {state === "expanded" ? (
+          <>
+            <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
+              <div className="relative w-8 h-8 flex-shrink-0 flex items-center justify-center">
+                <img 
+                  src="/logo.png" 
+                  alt="Askwiseo Logo" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <span className="font-bold text-xl tracking-tight text-white font-sans bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+                Askwiseo
+              </span>
+            </Link>
+            <SidebarToggle />
+          </>
+        ) : (
+          <button 
+            onClick={toggleSidebar} 
+            className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 text-zinc-400 hover:text-white hover:bg-white/10 active:scale-95"
+            title="Expand Sidebar"
+          >
             <img 
               src="/logo.png" 
               alt="Askwiseo Logo" 
-              className="w-full h-full object-contain"
+              className="w-6 h-6 object-contain"
             />
-          </div>
-          <span className="font-bold text-xl tracking-tight text-white font-sans bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
-            Askwiseo
-          </span>
-        </Link>
+          </button>
+        )}
       </SidebarHeader>
       <SidebarContent className="px-3 pt-4">
         <SidebarMenu className="space-y-1">
@@ -66,17 +90,25 @@ export function AppSidebar() {
                 asChild 
                 isActive={pathname === item.url} 
                 tooltip={item.title}
-                className={`flex items-center gap-3 px-4 py-6 rounded-xl transition-all duration-200 group ${
+                className={`flex items-center transition-all duration-200 group ${
+                  state === "collapsed" 
+                    ? "w-10 h-10 p-0 rounded-xl mx-auto justify-center" 
+                    : "gap-3 px-4 py-6 rounded-xl"
+                } ${
                   pathname === item.url 
                     ? "bg-white/[0.05] text-white shadow-premium-glow border border-white/10" 
                     : "text-zinc-400 hover:text-white hover:bg-white/[0.03]"
                 }`}
               >
-                <Link href={item.url}>
+                <Link href={item.url} className={state === "collapsed" ? "flex items-center justify-center w-full h-full" : "flex items-center w-full gap-3"}>
                   <item.icon className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${pathname === item.url ? "text-violet-400" : ""}`} />
-                  <span className="font-medium font-sans">{item.title}</span>
-                  {pathname === item.url && (
-                    <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                  {state === "expanded" && (
+                    <>
+                      <span className="font-medium font-sans">{item.title}</span>
+                      {pathname === item.url && (
+                        <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                      )}
+                    </>
                   )}
                 </Link>
               </SidebarMenuButton>
@@ -91,17 +123,25 @@ export function AppSidebar() {
               asChild 
               isActive={pathname === "/settings"} 
               tooltip="Settings"
-              className={`flex items-center gap-3 px-4 py-6 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center transition-all duration-200 group ${
+                state === "collapsed" 
+                  ? "w-10 h-10 p-0 rounded-xl mx-auto justify-center" 
+                  : "gap-3 px-4 py-6 rounded-xl"
+              } ${
                 pathname === "/settings" 
                   ? "bg-white/[0.05] text-white shadow-premium-glow border border-white/10" 
                   : "text-zinc-400 hover:text-white hover:bg-white/[0.03]"
               }`}
             >
-              <Link href="/settings">
+              <Link href="/settings" className={state === "collapsed" ? "flex items-center justify-center w-full h-full" : "flex items-center w-full gap-3"}>
                 <Settings className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${pathname === "/settings" ? "text-violet-400" : ""}`} />
-                <span className="font-medium font-sans">Settings</span>
-                {pathname === "/settings" && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                {state === "expanded" && (
+                  <>
+                    <span className="font-medium font-sans">Settings</span>
+                    {pathname === "/settings" && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                    )}
+                  </>
                 )}
               </Link>
             </SidebarMenuButton>
@@ -111,17 +151,25 @@ export function AppSidebar() {
               asChild 
               isActive={pathname === "/profile"} 
               tooltip="Profile"
-              className={`flex items-center gap-3 px-4 py-6 rounded-xl transition-all duration-200 group ${
+              className={`flex items-center transition-all duration-200 group ${
+                state === "collapsed" 
+                  ? "w-10 h-10 p-0 rounded-xl mx-auto justify-center" 
+                  : "gap-3 px-4 py-6 rounded-xl"
+              } ${
                 pathname === "/profile" 
                   ? "bg-white/[0.05] text-white shadow-premium-glow border border-white/10" 
                   : "text-zinc-400 hover:text-white hover:bg-white/[0.03]"
               }`}
             >
-              <Link href="/profile">
+              <Link href="/profile" className={state === "collapsed" ? "flex items-center justify-center w-full h-full" : "flex items-center w-full gap-3"}>
                 <User2 className={`h-5 w-5 transition-transform duration-200 group-hover:scale-110 ${pathname === "/profile" ? "text-violet-400" : ""}`} />
-                <span className="font-medium font-sans">Profile</span>
-                {pathname === "/profile" && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                {state === "expanded" && (
+                  <>
+                    <span className="font-medium font-sans">Profile</span>
+                    {pathname === "/profile" && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_#8b5cf6]" />
+                    )}
+                  </>
                 )}
               </Link>
             </SidebarMenuButton>

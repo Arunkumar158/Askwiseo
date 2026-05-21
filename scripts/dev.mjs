@@ -32,7 +32,7 @@ const children = [];
 function startProcess(name, command, args, options) {
   const child = spawn(command, args, {
     stdio: "inherit",
-    shell: false,
+    shell: isWindows,
     ...options,
   });
 

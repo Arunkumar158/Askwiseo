@@ -135,7 +135,7 @@ export function MessageBubble({
                         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/[0.03] border border-white/5 text-[11px] text-zinc-400 hover:bg-white/[0.08] hover:text-white cursor-help transition-all">
                           <FileText className="w-3.5 h-3.5 text-violet-400" />
                           <span className="max-w-[150px] truncate font-medium">{src.filename}</span>
-                          <span className="text-[9px] opacity-40 font-mono">p.{src.page_number || i+1}</span>
+                          <span className="text-[9px] opacity-40 font-mono">p.{(src as any).page_number || src.chunk_index || i+1}</span>
                         </div>
                       </TooltipTrigger>
                       <TooltipContent side="bottom" className="max-w-sm bg-[#121212] border-white/10 p-4 rounded-xl shadow-2xl backdrop-blur-xl">

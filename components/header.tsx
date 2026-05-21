@@ -7,7 +7,7 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
       <div className="mx-auto max-w-7xl flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 md:hidden">
           <SidebarToggle />
         </div>
         <div className="flex items-center gap-2">
