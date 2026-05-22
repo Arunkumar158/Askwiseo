@@ -43,6 +43,5 @@ __pycache__/
 *$py.class
 .env
 .env.*
-! .env.example
+!.env.example
 chroma_db/
-

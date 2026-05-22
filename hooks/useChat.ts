@@ -74,10 +74,12 @@ export function useChat(documentId?: string) {
             };
             setMessages((prev) => [...prev.filter((m) => !m.isLoading), assistantMsg]);
         } catch (err: any) {
+            const message = err.message || "Server temporarily unavailable. Please try again.";
+            toast.error(message);
             const errorMsg: LocalMessage = {
                 id: `error-${Date.now()}`,
                 role: "assistant",
-                content: `Error: ${err.message || "Failed to get a response"}`,
+                content: message,
                 timestamp: new Date().toISOString(),
             };
             setMessages((prev) => [...prev.filter((m) => !m.isLoading), errorMsg]);

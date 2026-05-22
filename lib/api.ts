@@ -1,12 +1,6 @@
-import { auth, getDbInstance } from "@/lib/firebase";
-import {
-    collection,
-    doc,
-    getDoc,
-    getDocs,
-    query,
-    where,
-} from "firebase/firestore";
+import { auth } from "@/lib/firebase";
+
+const SERVER_UNAVAILABLE_MESSAGE = "Server temporarily unavailable. Please try again.";
 
 function getBaseUrl(): string {
     const configured = process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -86,17 +80,34 @@ async function getAuthHeaders(forceRefresh = false): Promise<HeadersInit> {
     }
 }
 
+async function fetchWithNetworkMessage(url: string, init: RequestInit): Promise<Response> {
+    try {
+        return await fetch(url, init);
+    } catch {
+        throw new Error(SERVER_UNAVAILABLE_MESSAGE);
+    }
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${getBaseUrl()}${path}`;
+    const method = (options.method || "GET").toUpperCase();
+    const canRetryNetwork = method === "GET" || method === "HEAD";
     const request = async (forceRefresh: boolean) => {
         const authHeaders = await getAuthHeaders(forceRefresh);
-        return fetch(url, {
+        return fetchWithNetworkMessage(url, {
             ...options,
             headers: { ...authHeaders, ...(options.headers || {}) },
         });
     };
 
-    let response = await request(false);
+    let response: Response;
+    try {
+        response = await request(false);
+    } catch (error) {
+        if (!canRetryNetwork) throw error;
+        response = await request(false);
+    }
+
     if (response.status === 401 && auth.currentUser) {
         response = await request(true);
     }
@@ -107,7 +118,7 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
             response.status === 401
                 ? "Session expired. Please sign out and sign in again."
                 : error.detail || `API error: ${response.status}`;
-        throw new Error(message);
+        throw new Error(message || SERVER_UNAVAILABLE_MESSAGE);
     }
     return response.json() as Promise<T>;
 }
@@ -118,7 +129,7 @@ export async function uploadDocument(file: File): Promise<UploadResult> {
 
     const upload = async (forceRefresh: boolean) => {
         const authHeaders = await getAuthHeaders(forceRefresh);
-        return fetch(`${getBaseUrl()}/api/upload`, {
+        return fetchWithNetworkMessage(`${getBaseUrl()}/api/upload`, {
             method: "POST",
             headers: authHeaders,
             body: formData,
@@ -138,48 +149,11 @@ export async function uploadDocument(file: File): Promise<UploadResult> {
 }
 
 export async function listDocuments(): Promise<{ documents: Document[]; count: number }> {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error("Please sign in to continue");
-    }
-
-    const db = getDbInstance();
-    const documentsQuery = query(
-        collection(db, "documents"),
-        where("user_id", "==", user.uid)
-    );
-    const snapshot = await getDocs(documentsQuery);
-    const documents = snapshot.docs
-        .map((docSnapshot) => ({
-            id: docSnapshot.id,
-            ...docSnapshot.data(),
-        }) as Document)
-        .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
-
-    return { documents, count: documents.length };
+    return apiFetch("/api/documents");
 }
 
 export async function getDocument(documentId: string): Promise<Document> {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error("Please sign in to continue");
-    }
-
-    const db = getDbInstance();
-    const snapshot = await getDoc(doc(db, "documents", documentId));
-    if (!snapshot.exists()) {
-        throw new Error("Document not found.");
-    }
-
-    const document = {
-        id: snapshot.id,
-        ...snapshot.data(),
-    } as Document;
-    if (document.user_id !== user.uid) {
-        throw new Error("Document not found.");
-    }
-
-    return document;
+    return apiFetch(`/api/documents/${encodeURIComponent(documentId)}`);
 }
 
 export async function deleteDocument(documentId: string): Promise<{ success: boolean }> {
@@ -187,43 +161,7 @@ export async function deleteDocument(documentId: string): Promise<{ success: boo
 }
 
 export async function getInsights(): Promise<Insights> {
-    const { documents } = await listDocuments();
-    const documentTypes: Record<string, number> = {};
-    const topicCounts: Record<string, number> = {};
-    const allActionItems: Insights["all_action_items"] = [];
-
-    for (const document of documents) {
-        const documentType = document.document_type || "Other";
-        documentTypes[documentType] = (documentTypes[documentType] || 0) + 1;
-
-        for (const topic of document.key_topics || []) {
-            topicCounts[topic] = (topicCounts[topic] || 0) + 1;
-        }
-
-        for (const item of document.action_items || []) {
-            allActionItems.push({
-                text: item,
-                source: document.filename,
-                document_id: document.id,
-            });
-        }
-    }
-
-    return {
-        total_documents: documents.length,
-        total_pages: documents.reduce((total, document) => total + Number(document.page_count || 0), 0),
-        total_chunks: documents.reduce((total, document) => total + Number(document.chunk_count || 0), 0),
-        total_size_bytes: documents.reduce(
-            (total, document) => total + Number(document.file_size_bytes || 0),
-            0
-        ),
-        document_types: documentTypes,
-        top_topics: Object.entries(topicCounts)
-            .map(([topic, count]) => ({ topic, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 15),
-        all_action_items: allActionItems,
-    };
+    return apiFetch("/api/documents/insights");
 }
 
 export async function sendChatMessage(
@@ -246,29 +184,9 @@ export async function getChatHistory(
     documentId?: string,
     limit: number = 20
 ): Promise<{ history: ChatMessage[] }> {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error("Please sign in to continue");
-    }
-
-    const constraints = [where("user_id", "==", user.uid)];
-    if (documentId) {
-        constraints.push(where("document_id", "==", documentId));
-    }
-
-    const db = getDbInstance();
-    const historyQuery = query(collection(db, "chat_history"), ...constraints);
-    const snapshot = await getDocs(historyQuery);
-    const history = snapshot.docs
-        .map((docSnapshot) => ({
-            id: docSnapshot.id,
-            ...docSnapshot.data(),
-        }) as ChatMessage)
-        .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""))
-        .slice(0, limit)
-        .reverse();
-
-    return { history };
+    const params = new URLSearchParams({ limit: String(limit) });
+    if (documentId) params.set("document_id", documentId);
+    return apiFetch(`/api/chat/history?${params.toString()}`);
 }
 
 export interface UserPlan {
@@ -281,39 +199,24 @@ export interface UserPlan {
     storage_limit_bytes: number;
     billing_cycle_start: string;
     razorpay_subscription_id?: string;
+    paypal_subscription_id?: string;
 }
 
 export async function getUserPlan(): Promise<UserPlan> {
-    const user = auth.currentUser;
-    if (!user) {
-        throw new Error("Please sign in to continue");
-    }
-
-    const db = getDbInstance();
-    const [planSnapshot, documentsResult] = await Promise.all([
-        getDoc(doc(db, "user_plans", user.uid)),
-        listDocuments(),
-    ]);
-    const documents = documentsResult.documents;
-    const storedPlan = planSnapshot.exists() ? planSnapshot.data() : {};
-
+    const plan = await apiFetch<Partial<UserPlan> & { created_at?: string }>("/api/plan");
     return {
-        plan: (storedPlan.plan as UserPlan["plan"]) || "free",
-        questions_today: Number(storedPlan.questions_today || 0),
-        questions_limit: Number(storedPlan.questions_limit || 20),
-        pdf_count: documents.length,
-        pdf_limit: Number(storedPlan.pdf_limit || 10),
-        storage_used_bytes: documents.reduce(
-            (total, document) => total + Number(document.file_size_bytes || 0),
-            0
+        plan: plan.plan || "free",
+        questions_today: Number(plan.questions_today || 0),
+        questions_limit: Number(plan.questions_limit || 20),
+        pdf_count: Number(plan.pdf_count || 0),
+        pdf_limit: Number(plan.pdf_limit || 10),
+        storage_used_bytes: Number(plan.storage_used_bytes || 0),
+        storage_limit_bytes: Number(plan.storage_limit_bytes || 5242880),
+        billing_cycle_start: String(
+            plan.billing_cycle_start || plan.created_at || new Date().toISOString()
         ),
-        storage_limit_bytes: Number(storedPlan.storage_limit_bytes || 5242880),
-        billing_cycle_start:
-            String(storedPlan.billing_cycle_start || storedPlan.created_at || new Date().toISOString()),
-        razorpay_subscription_id:
-            typeof storedPlan.razorpay_subscription_id === "string"
-                ? storedPlan.razorpay_subscription_id
-                : undefined,
+        razorpay_subscription_id: plan.razorpay_subscription_id,
+        paypal_subscription_id: plan.paypal_subscription_id,
     };
 }
 

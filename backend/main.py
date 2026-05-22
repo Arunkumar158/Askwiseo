@@ -8,6 +8,18 @@ from routers import upload, chat, documents, billing
 
 logger = logging.getLogger("askwiseo")
 
+allowed_origins = {
+    origin.rstrip("/")
+    for origin in settings.ALLOWED_ORIGINS
+    if origin and origin.strip()
+}
+allowed_origins.update(
+    {
+        "http://localhost:3000",
+        "https://askwiseo.vercel.app",
+    }
+)
+
 app = FastAPI(
     title="Askwiseo API",
     description="AI-powered PDF knowledge base backend",
@@ -16,8 +28,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,
+    allow_origins=sorted(allowed_origins),
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

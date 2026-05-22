@@ -17,7 +17,9 @@ export function usePlan() {
             setPlan(data);
             setError(null);
         } catch (err: any) {
-            setError(err.message || "Failed to fetch plan");
+            const message = err.message || "Server temporarily unavailable. Please try again.";
+            setError(message);
+            toast.error(message);
         } finally {
             setLoading(false);
         }

@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import field_validator
 from typing import List
 
 class Settings(BaseSettings):
@@ -13,7 +14,10 @@ class Settings(BaseSettings):
     FIREBASE_SERVICE_ACCOUNT_JSON: str = ""
     CHROMA_PERSIST_DIR: str = "./chroma_db"
     CHROMA_COLLECTION_NAME: str = "askwiseo_docs"
-    ALLOWED_ORIGINS: List[str] = ["https://askwiseo.vercel.app"]
+    ALLOWED_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "https://askwiseo.vercel.app",
+    ]
     FRONTEND_URL: str = "https://askwiseo.vercel.app"
     MAX_FILE_SIZE_MB: int = 50
     CHUNK_SIZE: int = 1000
@@ -32,5 +36,17 @@ class Settings(BaseSettings):
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, value):
+        if isinstance(value, str):
+            value = value.strip()
+            if not value:
+                return []
+            if value.startswith("["):
+                return value
+            return [origin.strip() for origin in value.split(",") if origin.strip()]
+        return value
 
 settings = Settings()
