@@ -9,4 +9,4 @@ PyMuPDF==1.24.3
 numpy==1.26.4
 chromadb==0.5.23
 paypalrestsdk==1.13.3
-cloudinary==1.40.0
+sentry-sdk==2.5.0

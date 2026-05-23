@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from typing import List
 
 class Settings(BaseSettings):
@@ -25,8 +25,18 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = "models/gemini-embedding-2"
     CHAT_MODEL: str = "gemini-2.5-flash"
     MAX_RETRIEVED_CHUNKS: int = 5
+    SENTRY_DSN: str = ""
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
+    ENVIRONMENT: str = "development"
+    # List of environment variables that must be present in production
+    _REQUIRED_PROD_VARS: List[str] = [
+        "SENTRY_DSN",
+        "RAZORPAY_KEY_ID",
+        "RAZORPAY_KEY_SECRET",
+        "PAYPAL_CLIENT_ID",
+        "PAYPAL_SECRET",
+    ]
     RAZORPAY_WEBHOOK_SECRET: str = ""
     PAYPAL_CLIENT_ID: str = ""
     PAYPAL_SECRET: str = ""
@@ -48,5 +58,20 @@ class Settings(BaseSettings):
                 return value
             return [origin.strip() for origin in value.split(",") if origin.strip()]
         return value
+
+    @model_validator(mode="after")
+    def check_production_vars(self):
+        """Validate that required env vars are present when ENVIRONMENT is 'production'."""
+        env = self.ENVIRONMENT
+        if env == "production":
+            missing = []
+            for var in self._REQUIRED_PROD_VARS:
+                if not getattr(self, var, None):
+                    missing.append(var)
+            if missing:
+                raise ValueError(
+                    f"Missing required environment variables for production: {', '.join(missing)}"
+                )
+        return self
 
 settings = Settings()

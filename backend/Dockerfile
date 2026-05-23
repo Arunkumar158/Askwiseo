@@ -1,39 +1,48 @@
-FROM python:3.11
+# Dockerfile for FastAPI backend (Askwiseo)
+# -------------------------------------------------
+# Multi‑stage build to keep the final image lightweight.
+# Builder stage installs system dependencies and Python packages.
+# Runtime stage uses a minimal Python image.
 
+# ---- Builder ----
+FROM python:3.11-slim AS builder
 WORKDIR /app
 
-# Install system dependencies including Rust
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
     gcc \
     g++ \
-    curl \
-    build-essential \
-    && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    curl && \
+    rm -rf /var/lib/apt/lists/*
 
+# Install Rust toolchain (required by some wheels, e.g., chromadb)
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && \
+    export PATH="/root/.cargo/bin:${PATH}" && \
+    rustup default stable && \
+    rustup component add rustfmt clippy
 ENV PATH="/root/.cargo/bin:${PATH}"
 
+# Install Python packages
 COPY requirements.txt .
+RUN pip install --upgrade pip setuptools wheel && \
+    pip install -r requirements.txt
 
-RUN pip install --upgrade pip setuptools wheel
-
-# Install packages one by one to isolate issues
-RUN pip install fastapi==0.111.0
-RUN pip install uvicorn[standard]==0.29.0
-RUN pip install python-multipart==0.0.9
-RUN pip install pydantic==2.7.1
-RUN pip install pydantic-settings==2.2.1
-RUN pip install firebase-admin==6.5.0
-RUN pip install google-generativeai==0.5.4
-RUN pip install PyMuPDF==1.24.3
-RUN pip install "numpy==1.26.4"
-RUN pip install chromadb==0.5.23
-RUN pip install paypalrestsdk==1.13.3
-RUN pip install cloudinary==1.40.0
-
+# Copy source code
 COPY . .
 
+# ---- Runtime ----
+FROM python:3.11-alpine AS runtime
+WORKDIR /app
+
+# Copy only the needed runtime files from builder
+COPY --from=builder /app /app
+
+# Expose the API port (default 8000)
 EXPOSE 8000
 
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
+# Use environment variable for port (Render/Vercel compatibility)
+ENV PORT=8000
+
+# Start the FastAPI server
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "${PORT:-8000}"]

@@ -1,5 +1,9 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm run build"
+  "buildCommand": "pnpm run build",
+  "env": {
+    "SENTRY_DSN": "@vercel/sentry-dsn",
+    "NEXT_PUBLIC_SENTRY_DSN": "@vercel/next-public-sentry-dsn"
+  }
 }

@@ -127,6 +127,23 @@ npm run dev:web
 ```
 
 ---
+## 🚀 Deployment
+
+### Vercel (Frontend)
+
+- Ensure `vercel.json` is at the repository root.
+- Add `SENTRY_DSN` secret in Vercel dashboard (Settings → Environment Variables).
+- Connect the repo to Vercel; each push to `main` triggers a new deployment.
+
+### Render (Backend + Frontend)
+
+- Ensure `render.yaml` is at the repository root.
+- Add the `SENTRY_DSN` secret in Render (Environment → Secrets).
+- Create a new service from the repo; Render will automatically build the Docker backend and static frontend.
+- Both services will be redeployed on every push to `main`.
+
+> **Note:** The backend validates required production environment variables at startup. Set `ENVIRONMENT=production` in your deployment environment to enable the checks.
+
 
 ## 🗂 Folder Structure
 

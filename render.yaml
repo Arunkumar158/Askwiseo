@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: askwiseo-backend
+    env: docker
+    repo: .
+    dockerfilePath: ./backend/Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /healthz
+    healthCheckTimeout: 30
+    branch: main
+    # Render will map the container's port 8000 to the public URL
+    envVars:
+      - key: PORT
+        value: "8000"
+      - key: SENTRY_DSN
+        fromSecret: SENTRY_DSN
+  - type: static
+    name: askwiseo-frontend
+    env: node
+    repo: .
+    buildCommand: pnpm run build
+    staticPublishPath: .next
+    plan: free
+    autoDeploy: true
+    branch: main
+    envVars:
+      - key: NEXT_PUBLIC_SENTRY_DSN
+        fromSecret: SENTRY_DSN

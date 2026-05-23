@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.local
+    volumes:
+      - ./backend/chroma_db:/app/chroma_db
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
