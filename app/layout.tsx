@@ -4,8 +4,8 @@ import type { Metadata, Viewport } from "next"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import { ThemeProvider } from "@/components/theme-provider"
-import { Header } from "@/components/header"
+import ClientRoot from "@/components/client-root";
+import { Header } from "@/components/header";
 import { SiteFooter } from "@/components/site-footer"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SidebarProvider } from "@/components/ui/sidebar"
@@ -85,16 +85,21 @@ export default function RootLayout({
       suppressHydrationWarning 
       className={`${GeistSans.variable} ${GeistMono.variable} ${jetbrainsMono.variable} ${inter.variable}`}
     >
+      <head>
+        {/* Preconnect to Google Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      </head>
       <body className={GeistSans.className}>
         <AuthProvider>
-          <ThemeProvider attribute="class" defaultTheme="dark" forcedTheme="dark" enableSystem={false}>
+          <ClientRoot>
             <SidebarProvider>
               <LayoutContent>{children}</LayoutContent>
               <FeedbackButton />
             </SidebarProvider>
             <Toaster />
             <HotToaster position="top-center" />
-          </ThemeProvider>
+          </ClientRoot>
         </AuthProvider>
       </body>
     </html>

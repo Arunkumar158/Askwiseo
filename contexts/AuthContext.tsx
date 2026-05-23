@@ -11,7 +11,7 @@ import {
   signInWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { auth, isFirebaseConfigured } from "@/lib/firebase";
+import { auth, listenAuthState, isFirebaseConfigured } from "@/lib/firebase";
 
 interface AuthContextType {
   user: User | null;

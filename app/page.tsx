@@ -1,12 +1,13 @@
-"use client"
-
-import { DashboardHeader } from "@/components/dashboard/header"
-import { DashboardShell } from "@/components/dashboard/shell"
-import { UploadSection } from "@/components/dashboard/upload-section"
-import { RecentDocuments } from "@/components/dashboard/recent-documents"
-import { AIInsights } from "@/components/dashboard/ai-insights"
-import { PlanTracker } from "@/components/dashboard/plan-tracker"
-import { MotionWrapper } from "@/components/ui/motion-wrapper"
+"use client";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+const DashboardHeader = dynamic(() => import("@/components/dashboard/header").then(mod => mod.DashboardHeader), { loading: () => <Skeleton className="h-6 w-32" /> });
+const DashboardShell = dynamic(() => import("@/components/dashboard/shell").then(mod => mod.DashboardShell), { loading: () => <Skeleton className="h-6 w-32" /> });
+const UploadSection = dynamic(() => import("@/components/dashboard/upload-section").then(mod => mod.UploadSection), { loading: () => <Skeleton className="h-6 w-32" /> });
+const RecentDocuments = dynamic(() => import("@/components/dashboard/recent-documents").then(mod => mod.RecentDocuments), { loading: () => <Skeleton className="h-6 w-32" /> });
+const AIInsights = dynamic(() => import("@/components/dashboard/ai-insights").then(mod => mod.AIInsights), { loading: () => <Skeleton className="h-6 w-32" /> });
+const PlanTracker = dynamic(() => import("@/components/dashboard/plan-tracker").then(mod => mod.PlanTracker), { loading: () => <Skeleton className="h-6 w-32" /> });
+const MotionWrapper = dynamic(() => import("@/components/ui/motion-wrapper").then(mod => mod.MotionWrapper), { loading: () => <Skeleton className="h-6 w-32" /> });
 
 export default function DashboardPage() {
   return (

@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileText, Loader2 } from "lucide-react";
+import { MoreHorizontal, FileText } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useDocuments } from "@/hooks/useDocuments";
 import { useRouter } from "next/navigation";
 import type React from "react";
@@ -30,7 +31,7 @@ export function RecentDocuments({ className, ...props }: RecentDocumentsProps) {
       <CardContent>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12 space-y-3">
-            <Loader2 className="h-8 w-8 animate-spin text-violet-500" />
+            <Skeleton className="h-8 w-32" />
             <p className="text-[10px] font-mono uppercase tracking-widest text-zinc-600">Syncing Assets...</p>
           </div>
         ) : recent.length === 0 ? (

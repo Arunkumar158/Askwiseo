@@ -4,7 +4,8 @@ import type React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, FileText, Loader2 } from "lucide-react"
+import { Upload, FileText } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation"
 import { useDocuments } from "@/hooks/useDocuments"
 import { useDropzone } from "react-dropzone"
@@ -42,11 +43,11 @@ export function UploadSection({ className, ...props }: UploadSectionProps) {
           <div className="relative mb-4 group-hover:scale-110 transition-transform duration-300">
             <div className="absolute inset-0 bg-violet-500/20 blur-xl rounded-full" />
             <div className="relative w-14 h-14 rounded-2xl bg-[#050505] border border-white/10 flex items-center justify-center shadow-premium-glow">
-              {uploading ? (
-                <Loader2 className="h-6 w-6 text-violet-400 animate-spin" />
-              ) : (
-                <Upload className="h-6 w-6 text-violet-400" />
-              )}
+                {uploading ? (
+                  <Skeleton className="h-6 w-6 text-violet-400" />
+                ) : (
+                  <Upload className="h-6 w-6 text-violet-400" />
+                )}
             </div>
           </div>
           

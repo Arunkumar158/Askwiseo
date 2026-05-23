@@ -4,6 +4,7 @@ import type React from "react"
 import { cn } from "@/lib/utils"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Search, Loader2 } from "lucide-react"
+import { Skeleton } from "@/components/ui/skeleton"
 import { useDocuments } from "@/hooks/useDocuments"
 
 interface AIInsightsProps extends React.HTMLAttributes<HTMLDivElement> {}
@@ -25,7 +26,7 @@ export function AIInsights({ className, ...props }: AIInsightsProps) {
       <CardContent>
         {loading ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <Skeleton className="h-6 w-32" />
           </div>
         ) : recentDocs.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground text-sm">

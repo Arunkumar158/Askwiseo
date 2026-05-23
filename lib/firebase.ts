@@ -94,6 +94,7 @@ function createLazyProxy<T extends object>(getInstance: () => T): T {
   });
 }
 
+
 export const auth = createLazyProxy<Auth>(getAuthInstance);
 export const db = createLazyProxy<Firestore>(getDbInstance);
 export const storage = createLazyProxy<FirebaseStorage>(getStorageInstance);
