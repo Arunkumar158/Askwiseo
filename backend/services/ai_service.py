@@ -17,12 +17,12 @@ def build_context(chunks: List[Dict[str, Any]]) -> str:
         parts.append(f"[Source {i} — {filename}]\n{chunk['text']}")
     return "\n\n---\n\n".join(parts)
 
-def generate_answer(question: str, user_id: str, document_id=None, chat_history=None):
+async def generate_answer(question: str, user_id: str, document_id=None, chat_history=None):
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set")
     genai.configure(api_key=settings.GEMINI_API_KEY)
 
-    chunks = retrieve_chunks(query=question, user_id=user_id, document_id=document_id)
+    chunks = await retrieve_chunks(query=question, user_id=user_id, document_id=document_id)
 
     if not chunks:
         return {

@@ -1,0 +1,135 @@
+import os
+from typing import List, Dict, Any
+
+from pinecone import Pinecone, ServerlessSpec
+from fastapi.concurrency import run_in_threadpool
+
+from config import settings
+
+# -----------------------------------------------------------------------------
+# Initialization
+# -----------------------------------------------------------------------------
+
+def _init_pinecone():
+    """Initialize Pinecone client and return the index instance.
+
+    This function is idempotent – it will create the index if it does not exist.
+    The index is configured for dense vectors with dimension 768 and cosine metric
+    as required by the migration plan.
+
+    Uses the Pinecone v3 SDK which requires instantiating a ``Pinecone`` client
+    object rather than calling the legacy ``pinecone.init()`` function.
+    """
+    pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+
+    # Check if the index already exists
+    existing_indexes = [idx.name for idx in pc.list_indexes()]
+
+    if settings.PINECONE_INDEX_NAME not in existing_indexes:
+        cloud = settings.PINECONE_CLOUD or "aws"
+        region = settings.PINECONE_REGION or "us-east-1"
+        pc.create_index(
+            name=settings.PINECONE_INDEX_NAME,
+            dimension=768,
+            metric="cosine",
+            spec=ServerlessSpec(cloud=cloud, region=region),
+        )
+
+    return pc.Index(settings.PINECONE_INDEX_NAME)
+
+# Cache the index singleton
+_pinecone_index = None
+
+def get_index():
+    global _pinecone_index
+    if _pinecone_index is None:
+        _pinecone_index = _init_pinecone()
+    return _pinecone_index
+
+# -----------------------------------------------------------------------------
+# Public async‑friendly API
+# -----------------------------------------------------------------------------
+
+async def upsert_vectors(
+    ids: List[str],
+    embeddings: List[List[float]],
+    metadatas: List[Dict[str, Any]],
+    namespace: str,
+) -> None:
+    """Upsert a batch of vectors into Pinecone.
+
+    Args:
+        ids: Unique identifiers for the vectors (e.g. "doc123_chunk_0").
+        embeddings: List of 768‑dim float vectors.
+        metadatas: Corresponding metadata dictionaries.
+        namespace: Pinecone namespace – we use the Firebase ``user_id`` to isolate
+            each user's data.
+    """
+    index = get_index()
+    vectors = [(vid, vec, meta) for vid, vec, meta in zip(ids, embeddings, metadatas)]
+    await run_in_threadpool(index.upsert, vectors=vectors, namespace=namespace)
+
+
+async def query_vectors(
+    query_embedding: List[float],
+    namespace: str,
+    top_k: int = 5,
+    filter: Dict[str, Any] | None = None,
+) -> List[Dict[str, Any]]:
+    """Query Pinecone for the nearest neighbours.
+
+    Returns a list of matches where each entry contains ``id``, ``score``, ``metadata`` and ``values``.
+    """
+    index = get_index()
+    response = await run_in_threadpool(
+        index.query,
+        vector=query_embedding,
+        top_k=top_k,
+        namespace=namespace,
+        filter=filter,
+        include_values=False,
+        include_metadata=True,
+    )
+    return response.get("matches", [])
+
+
+async def delete_by_ids(ids: List[str], namespace: str) -> None:
+    """Delete specific vector IDs from a namespace."""
+    index = get_index()
+    await run_in_threadpool(index.delete, ids=ids, namespace=namespace)
+
+
+async def delete_by_filter(filter: Dict[str, Any], namespace: str) -> None:
+    """Delete all vectors matching a metadata filter within a namespace."""
+    index = get_index()
+    await run_in_threadpool(index.delete, filter=filter, namespace=namespace)
+
+# -----------------------------------------------------------------------------
+# Convenience wrappers used by ``vector_store.py``
+# -----------------------------------------------------------------------------
+
+async def upsert_document_chunks(
+    document_id: str,
+    user_id: str,
+    filename: str,
+    chunks: List[str],
+    embeddings: List[List[float]],
+) -> None:
+    """Helper used by ``vector_store.store_chunks`` – builds metadata and calls ``upsert_vectors``."""
+    ids = [f"{document_id}_chunk_{i}" for i in range(len(chunks))]
+    metadatas = [
+        {
+            "document_id": document_id,
+            "user_id": user_id,
+            "filename": filename,
+            "chunk_index": i,
+            "text": chunk,
+        }
+        for i, chunk in enumerate(chunks)
+    ]
+    await upsert_vectors(ids=ids, embeddings=embeddings, metadatas=metadatas, namespace=user_id)
+
+
+async def delete_document(document_id: str, user_id: str) -> None:
+    """Delete all chunks belonging to ``document_id`` for a given user."""
+    await delete_by_filter({"document_id": document_id}, namespace=user_id)

@@ -25,7 +25,7 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="Daily question limit reached. Upgrade your plan for more questions.")
             
     history = get_chat_history(user_id=user_id, document_id=body.document_id, limit=6) if body.include_history else []
-    result = generate_answer(question=body.question, user_id=user_id,
+    result = await generate_answer(question=body.question, user_id=user_id,
                              document_id=body.document_id, chat_history=history)
     saved = save_chat_message(user_id=user_id, document_id=body.document_id,
                               question=body.question, answer=result["answer"], sources=result["sources"])

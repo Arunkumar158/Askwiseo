@@ -47,6 +47,14 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
 
+    # Pinecone settings
+    PINECONE_API_KEY: str = ""
+    PINECONE_INDEX_NAME: str = ""
+    PINECONE_ENVIRONMENT: str = ""
+    # optional cloud/region pair (not used if environment provided)
+    PINECONE_CLOUD: str = ""
+    PINECONE_REGION: str = ""
+
     @field_validator("ALLOWED_ORIGINS", mode="before")
     @classmethod
     def parse_allowed_origins(cls, value):
@@ -73,5 +81,29 @@ class Settings(BaseSettings):
                     f"Missing required environment variables for production: {', '.join(missing)}"
                 )
         return self
+
+    def validate_pinecone_env(self) -> None:
+        """Ensure Pinecone required environment variables are set.
+
+        Requires PINECONE_API_KEY and PINECONE_INDEX_NAME.
+        For the host/region, accepts either PINECONE_ENVIRONMENT (legacy)
+        or the PINECONE_CLOUD + PINECONE_REGION pair (Pinecone v3+).
+
+        Raises:
+            RuntimeError: If any required Pinecone variable is missing.
+        """
+        missing = []
+        for var in ("PINECONE_API_KEY", "PINECONE_INDEX_NAME"):
+            if not getattr(self, var, ""):
+                missing.append(var)
+        # Accept either PINECONE_ENVIRONMENT or PINECONE_CLOUD+PINECONE_REGION
+        has_env = bool(getattr(self, "PINECONE_ENVIRONMENT", ""))
+        has_cloud_region = bool(getattr(self, "PINECONE_CLOUD", "")) and bool(getattr(self, "PINECONE_REGION", ""))
+        if not has_env and not has_cloud_region:
+            missing.append("PINECONE_ENVIRONMENT (or PINECONE_CLOUD + PINECONE_REGION)")
+        if missing:
+            raise RuntimeError(
+                f"Missing required Pinecone environment variables: {', '.join(missing)}"
+            )
 
 settings = Settings()
