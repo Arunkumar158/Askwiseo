@@ -10,3 +10,4 @@ numpy==1.26.4
 chromadb==0.5.23
 paypalrestsdk==1.13.3
 sentry-sdk==2.5.0
+cloudinary==1.41.0
