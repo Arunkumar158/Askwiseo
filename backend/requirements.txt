@@ -11,3 +11,4 @@ chromadb==0.5.23
 paypalrestsdk==1.13.3
 sentry-sdk==2.5.0
 cloudinary==1.41.0
+prometheus-client==0.20.0

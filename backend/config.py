@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     RAZORPAY_WEBHOOK_SECRET: str = ""
     PAYPAL_CLIENT_ID: str = ""
     PAYPAL_SECRET: str = ""
-    PAYPAL_MODE: str = "sandbox"
+    ENABLE_NEW_FEATURE: bool = False
     PAYPAL_STARTER_PLAN_ID: str = ""
     PAYPAL_PRO_PLAN_ID: str = ""
     CLOUDINARY_CLOUD_NAME: str = ""
