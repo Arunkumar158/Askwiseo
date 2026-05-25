@@ -87,8 +87,7 @@ async def log_config_status():
     try:
         settings.validate_pinecone_env()
     except RuntimeError as e:
-        logger.error(str(e))
-        raise
+        logger.warning(f"Pinecone configuration warning: {e} — AI/Vector endpoints will fail until variables are set on Render.")
     if not settings.GEMINI_API_KEY:
         logger.warning("GEMINI_API_KEY is not set — AI endpoints will fail")
     if not settings.FIREBASE_SERVICE_ACCOUNT_JSON:
