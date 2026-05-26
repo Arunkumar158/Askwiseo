@@ -105,3 +105,7 @@ async def healthz():
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "askwiseo-api"}
+@app.get("/")
+async def root():
+    return {"status": "ok", "service": "Askwiseo Backend API"}
+
