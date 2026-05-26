@@ -23,6 +23,10 @@ allowed_origins = {
     for origin in settings.ALLOWED_ORIGINS
     if origin and origin.strip()
 }
+allowed_origins.update({
+    "http://localhost:3000",
+    "https://askwiseo.vercel.app",
+})
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 app = FastAPI(
     title="Askwiseo API",
