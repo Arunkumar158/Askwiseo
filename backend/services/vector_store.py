@@ -1,7 +1,12 @@
+import logging
+import traceback
+
 import google.generativeai as genai
 from config import settings
 from typing import List, Dict, Any
 from fastapi.concurrency import run_in_threadpool
+
+logger = logging.getLogger("askwiseo.vector_store")
 
 # Embedding utilities (still use Gemini embeddings)
 
@@ -71,16 +76,22 @@ async def retrieve_chunks(
     Returns a list of dicts with ``text``, ``metadata`` and ``score``.
     """
     query_emb = embed_query(query)
-    filter_dict: Dict[str, Any] | None = {"user_id": user_id}
+    filter_dict: Dict[str, Any] = {"user_id": user_id}
     if document_id:
-        filter_dict = {"$and": [{"user_id": user_id}, {"document_id": document_id}]}
+        filter_dict["document_id"] = document_id
     top_k = n_results or settings.MAX_RETRIEVED_CHUNKS
-    matches = await query_vectors(
-        query_embedding=query_emb,
-        namespace=user_id,
-        top_k=top_k,
-        filter=filter_dict,
-    )
+
+    try:
+        matches = await query_vectors(
+            query_embedding=query_emb,
+            namespace=user_id,
+            top_k=top_k,
+            filter=filter_dict,
+        )
+    except Exception as exc:
+        logger.error("Pinecone query failed: %s\n%s", exc, traceback.format_exc())
+        return []  # Graceful fallback — generate_answer handles empty chunks
+
     # Transform Pinecone matches into the legacy format
     chunks: List[Dict[str, Any]] = []
     for m in matches:
@@ -89,7 +100,7 @@ async def retrieve_chunks(
             {
                 "text": metadata.get("text", ""),
                 "metadata": metadata,
-                "score": 1 - m.get("score", 0),  # convert distance to similarity if needed
+                "score": m.get("score", 0),  # Pinecone cosine already returns similarity
             }
         )
     return chunks

@@ -1,7 +1,12 @@
+import logging
+import traceback
+
 import google.generativeai as genai
 from config import settings
 from services.vector_store import retrieve_chunks
 from typing import List, Dict, Any
+
+logger = logging.getLogger("askwiseo.ai")
 
 SYSTEM_PROMPT = """You are Askwiseo, an AI assistant that answers questions based strictly on the provided document context.
 - Answer ONLY using the provided context. Do not hallucinate.
@@ -47,8 +52,13 @@ async def generate_answer(question: str, user_id: str, document_id=None, chat_hi
     chat = model.start_chat(history=history)
 
     prompt = f"Context from documents:\n\n{context}\n\n---\n\nQuestion: {question}"
-    response = chat.send_message(prompt)
-    answer = response.text
+
+    try:
+        response = chat.send_message(prompt)
+        answer = response.text
+    except Exception as exc:
+        logger.error("Gemini API call failed: %s\n%s", exc, traceback.format_exc())
+        raise RuntimeError(f"AI model request failed: {exc}") from exc
 
     sources = [
         {
@@ -90,7 +100,7 @@ def generate_document_summary(filename: str, text: str) -> dict:
 
 Document name: {filename}
 Document content: {sample_text}"""
-
+    
     try:
         response = model.generate_content(prompt)
         import json
@@ -102,10 +112,10 @@ Document content: {sample_text}"""
                 text_response = text_response[4:]
         return json.loads(text_response.strip())
     except Exception as e:
+        logger.warning("Document summary generation failed for '%s': %s", filename, e)
         return {
             "summary": f"Document uploaded successfully: {filename}",
             "key_topics": [],
             "document_type": "Other",
             "action_items": []
         }
-    

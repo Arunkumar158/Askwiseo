@@ -1,10 +1,13 @@
-import os
+import logging
+import traceback
 from typing import List, Dict, Any
 
 from pinecone import Pinecone, ServerlessSpec
 from fastapi.concurrency import run_in_threadpool
 
 from config import settings
+
+logger = logging.getLogger("askwiseo.pinecone")
 
 # -----------------------------------------------------------------------------
 # Initialization
@@ -17,25 +20,35 @@ def _init_pinecone():
     The index is configured for dense vectors with dimension 768 and cosine metric
     as required by the migration plan.
 
-    Uses the Pinecone v3 SDK which requires instantiating a ``Pinecone`` client
+    Uses the Pinecone v3+ SDK which requires instantiating a ``Pinecone`` client
     object rather than calling the legacy ``pinecone.init()`` function.
     """
-    pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+    if not settings.PINECONE_API_KEY:
+        raise RuntimeError("PINECONE_API_KEY is not set — cannot initialize Pinecone")
+    if not settings.PINECONE_INDEX_NAME:
+        raise RuntimeError("PINECONE_INDEX_NAME is not set — cannot initialize Pinecone")
 
-    # Check if the index already exists
-    existing_indexes = [idx.name for idx in pc.list_indexes()]
+    try:
+        pc = Pinecone(api_key=settings.PINECONE_API_KEY)
 
-    if settings.PINECONE_INDEX_NAME not in existing_indexes:
-        cloud = settings.PINECONE_CLOUD or "aws"
-        region = settings.PINECONE_REGION or "us-east-1"
-        pc.create_index(
-            name=settings.PINECONE_INDEX_NAME,
-            dimension=768,
-            metric="cosine",
-            spec=ServerlessSpec(cloud=cloud, region=region),
-        )
+        # Check if the index already exists
+        existing_indexes = [idx.name for idx in pc.list_indexes()]
 
-    return pc.Index(settings.PINECONE_INDEX_NAME)
+        if settings.PINECONE_INDEX_NAME not in existing_indexes:
+            cloud = settings.PINECONE_CLOUD or "aws"
+            region = settings.PINECONE_REGION or "us-east-1"
+            logger.info("Creating Pinecone index '%s' on %s/%s", settings.PINECONE_INDEX_NAME, cloud, region)
+            pc.create_index(
+                name=settings.PINECONE_INDEX_NAME,
+                dimension=768,
+                metric="cosine",
+                spec=ServerlessSpec(cloud=cloud, region=region),
+            )
+
+        return pc.Index(settings.PINECONE_INDEX_NAME)
+    except Exception as exc:
+        logger.error("Pinecone initialization failed: %s\n%s", exc, traceback.format_exc())
+        raise RuntimeError(f"Pinecone initialization failed: {exc}") from exc
 
 # Cache the index singleton
 _pinecone_index = None
@@ -81,16 +94,20 @@ async def query_vectors(
     Returns a list of matches where each entry contains ``id``, ``score``, ``metadata`` and ``values``.
     """
     index = get_index()
-    response = await run_in_threadpool(
-        index.query,
-        vector=query_embedding,
-        top_k=top_k,
-        namespace=namespace,
-        filter=filter,
-        include_values=False,
-        include_metadata=True,
-    )
-    return response.get("matches", [])
+    try:
+        response = await run_in_threadpool(
+            index.query,
+            vector=query_embedding,
+            top_k=top_k,
+            namespace=namespace,
+            filter=filter,
+            include_values=False,
+            include_metadata=True,
+        )
+        return response.get("matches", [])
+    except Exception as exc:
+        logger.error("Pinecone query error: %s\n%s", exc, traceback.format_exc())
+        raise
 
 
 async def delete_by_ids(ids: List[str], namespace: str) -> None:
