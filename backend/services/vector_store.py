@@ -16,12 +16,27 @@ def _init_genai() -> None:
     genai.configure(api_key=settings.GEMINI_API_KEY)
 
 
+def _get_model_name() -> str:
+    """Gets the embedding model name and normalizes it to start with 'models/' exactly once."""
+    model_name = getattr(settings, "EMBEDDING_MODEL", "models/gemini-embedding-2")
+    if not model_name:
+        model_name = "models/gemini-embedding-2"
+    model_name = model_name.strip()
+    
+    # Strip any leading 'models/' first to normalize, then prefix with 'models/'
+    while model_name.startswith("models/"):
+        model_name = model_name[len("models/"):]
+        
+    return f"models/{model_name}"
+
+
 def embed_texts(texts: List[str]) -> List[List[float]]:
     _init_genai()
+    model_name = _get_model_name()
     embeddings: List[List[float]] = []
     for text in texts:
         result = genai.embed_content(
-            model=settings.EMBEDDING_MODEL,
+            model=model_name,
             content=text,
             task_type="retrieval_document",
             output_dimensionality=768,
@@ -32,8 +47,9 @@ def embed_texts(texts: List[str]) -> List[List[float]]:
 
 def embed_query(text: str) -> List[float]:
     _init_genai()
+    model_name = _get_model_name()
     result = genai.embed_content(
-        model=settings.EMBEDDING_MODEL,
+        model=model_name,
         content=text,
         task_type="retrieval_query",
         output_dimensionality=768,
@@ -55,7 +71,19 @@ async def store_chunks(document_id: str, user_id: str, filename: str, chunks: Li
 
     Returns the number of chunks indexed.
     """
-    embeddings = embed_texts(chunks)
+    try:
+        embeddings = embed_texts(chunks)
+    except Exception as exc:
+        logger.error(
+            "Embedding generation failed for file %s (ID: %s) of user %s: %s\n%s",
+            filename,
+            document_id,
+            user_id,
+            exc,
+            traceback.format_exc()
+        )
+        raise ValueError(f"Failed to generate embeddings for document: {exc}")
+
     await upsert_document_chunks(
         document_id=document_id,
         user_id=user_id,
@@ -75,7 +103,12 @@ async def retrieve_chunks(
 
     Returns a list of dicts with ``text``, ``metadata`` and ``score``.
     """
-    query_emb = embed_query(query)
+    try:
+        query_emb = embed_query(query)
+    except Exception as exc:
+        logger.error("Failed to generate query embedding: %s\n%s", exc, traceback.format_exc())
+        return []  # Graceful fallback — generate_answer handles empty chunks
+
     filter_dict: Dict[str, Any] = {"user_id": user_id}
     if document_id:
         filter_dict["document_id"] = document_id
