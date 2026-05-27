@@ -71,8 +71,9 @@ async def _upload_pdf_impl(file: UploadFile, user: dict):
             
             response = cloudinary.uploader.upload(
                 io.BytesIO(file_bytes),
-                resource_type="raw",
-                public_id=f"{doc_id}.pdf",
+                resource_type="image",
+                public_id=doc_id,
+                format="pdf",
                 folder=f"askwiseo/uploads/{user['uid']}"
             )
             file_url = response.get("secure_url")

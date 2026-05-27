@@ -13,13 +13,18 @@ if settings.CLOUDINARY_CLOUD_NAME and settings.CLOUDINARY_API_KEY:
         secure=True
     )
     try:
+        # Read the generated scratch/test.pdf
+        with open("scratch/test.pdf", "rb") as f:
+            pdf_bytes = f.read()
+
         response = cloudinary.uploader.upload(
-            b"Dummy PDF content",
-            resource_type="raw",
-            public_id="test_doc.pdf",
+            pdf_bytes,
+            resource_type="image",
+            public_id="test_doc_image",
+            format="pdf",
             folder="askwiseo/uploads/test_user"
         )
-        print("Success!")
+        print("Success as image!")
         print("URL:", response.get("secure_url"))
     except Exception as e:
         print("Upload failed:", e)
