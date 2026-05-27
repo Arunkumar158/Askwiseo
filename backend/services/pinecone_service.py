@@ -23,10 +23,9 @@ def _init_pinecone():
     Uses the Pinecone v3+ SDK which requires instantiating a ``Pinecone`` client
     object rather than calling the legacy ``pinecone.init()`` function.
     """
-    if not settings.PINECONE_API_KEY:
-        raise RuntimeError("PINECONE_API_KEY is not set — cannot initialize Pinecone")
-    if not settings.PINECONE_INDEX_NAME:
-        raise RuntimeError("PINECONE_INDEX_NAME is not set — cannot initialize Pinecone")
+    if not settings.PINECONE_API_KEY or not settings.PINECONE_INDEX_NAME:
+        logger.warning("Pinecone configuration is missing (API_KEY or INDEX_NAME not set). Skipping Pinecone initialization.")
+        return None
 
     try:
         pc = Pinecone(api_key=settings.PINECONE_API_KEY)
@@ -79,6 +78,10 @@ async def upsert_vectors(
             each user's data.
     """
     index = get_index()
+    if index is None:
+        logger.warning("Pinecone is not initialized. Skipping upsert.")
+        return
+
     vectors = [(vid, vec, meta) for vid, vec, meta in zip(ids, embeddings, metadatas)]
     await run_in_threadpool(index.upsert, vectors=vectors, namespace=namespace)
 
@@ -94,6 +97,10 @@ async def query_vectors(
     Returns a list of matches where each entry contains ``id``, ``score``, ``metadata`` and ``values``.
     """
     index = get_index()
+    if index is None:
+        logger.warning("Pinecone is not initialized. Returning empty query results.")
+        return []
+
     try:
         response = await run_in_threadpool(
             index.query,
@@ -113,12 +120,20 @@ async def query_vectors(
 async def delete_by_ids(ids: List[str], namespace: str) -> None:
     """Delete specific vector IDs from a namespace."""
     index = get_index()
+    if index is None:
+        logger.warning("Pinecone is not initialized. Skipping delete.")
+        return
+
     await run_in_threadpool(index.delete, ids=ids, namespace=namespace)
 
 
 async def delete_by_filter(filter: Dict[str, Any], namespace: str) -> None:
     """Delete all vectors matching a metadata filter within a namespace."""
     index = get_index()
+    if index is None:
+        logger.warning("Pinecone is not initialized. Skipping delete.")
+        return
+
     await run_in_threadpool(index.delete, filter=filter, namespace=namespace)
 
 # -----------------------------------------------------------------------------
