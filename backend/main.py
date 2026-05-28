@@ -59,7 +59,7 @@ async def security_headers_middleware(request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
-    response.headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups"
+    response.headers["Content-Security-Policy"] = "default-src 'self'"
     return response
 
 allowed_origins.update(

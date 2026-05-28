@@ -13,6 +13,19 @@ try {
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
+          },
+        ],
+      },
+    ]
+  },
   async rewrites() {
     const apiOrigin = process.env.API_PROXY_URL || "http://127.0.0.1:8000"
     return [
