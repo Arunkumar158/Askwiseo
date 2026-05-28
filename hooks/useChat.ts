@@ -11,6 +11,7 @@ export interface LocalMessage {
     sources?: ChatSource[];
     timestamp: string;
     isLoading?: boolean;
+    error_code?: string;
 }
 
 export function useChat(documentId?: string) {
@@ -71,6 +72,7 @@ export function useChat(documentId?: string) {
                 content: result.answer,
                 sources: result.sources,
                 timestamp: new Date().toISOString(),
+                error_code: result.error_code,
             };
             setMessages((prev) => [...prev.filter((m) => !m.isLoading), assistantMsg]);
         } catch (err: any) {

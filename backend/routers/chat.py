@@ -75,9 +75,19 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
     except Exception as exc:
         logger.error("Failed to save chat message: %s\n%s", exc, traceback.format_exc())
         # Still return the answer even if persistence fails
-        return {"answer": result["answer"], "sources": result["sources"], "chat_id": None}
+        early: dict = {"answer": result["answer"], "sources": result["sources"], "chat_id": None}
+        if result.get("error_code"):
+            early["error_code"] = result["error_code"]
+        return early
 
-    return {"answer": result["answer"], "sources": result["sources"], "chat_id": saved["id"]}
+    response_payload: dict = {
+        "answer": result["answer"],
+        "sources": result["sources"],
+        "chat_id": saved["id"],
+    }
+    if result.get("error_code"):
+        response_payload["error_code"] = result["error_code"]
+    return response_payload
 
 @router.get("/chat/history")
 async def chat_history(document_id: Optional[str] = None, limit: int = 20,

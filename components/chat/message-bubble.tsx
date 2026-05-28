@@ -12,7 +12,8 @@ import {
   ThumbsDown, 
   RotateCcw, 
   FileText,
-  User
+  User,
+  AlertTriangle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ interface Message {
   sources?: ChatSource[];
   timestamp: string;
   isLoading?: boolean;
+  error_code?: string;
 }
 
 interface MessageBubbleProps {
@@ -115,6 +117,30 @@ export function MessageBubble({
         )}>
           {isUser ? (
             <p className="whitespace-pre-wrap leading-relaxed text-base font-inter">{message.content}</p>
+          ) : message.error_code === "VECTOR_STORE_UNAVAILABLE" ? (
+            <div className="flex flex-col gap-3">
+              {/* Warning banner */}
+              <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/25">
+                <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                <div className="flex flex-col gap-1">
+                  <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider">Vector Store Unavailable</span>
+                  <span className="text-xs text-amber-200/70 leading-relaxed">
+                    Pinecone is not connected. Check that{" "}
+                    <code className="font-mono bg-amber-500/10 px-1 rounded">PINECONE_API_KEY</code>,{" "}
+                    <code className="font-mono bg-amber-500/10 px-1 rounded">PINECONE_INDEX_NAME</code>, and{" "}
+                    <code className="font-mono bg-amber-500/10 px-1 rounded">PINECONE_CLOUD</code>{" "}+{" "}
+                    <code className="font-mono bg-amber-500/10 px-1 rounded">PINECONE_REGION</code>{" "}
+                    are set in your Render Environment Variables.
+                  </span>
+                </div>
+              </div>
+              {/* The actual message text */}
+              <div className="chat-markdown font-inter text-base text-zinc-400">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {message.content}
+                </ReactMarkdown>
+              </div>
+            </div>
           ) : (
             <div className="chat-markdown font-inter text-base">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>

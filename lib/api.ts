@@ -55,6 +55,7 @@ export interface ChatResult {
     answer: string;
     sources: ChatSource[];
     chat_id: string;
+    error_code?: string;
 }
 
 export interface Insights {

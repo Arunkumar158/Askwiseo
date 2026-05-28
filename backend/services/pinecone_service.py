@@ -23,15 +23,28 @@ def _init_pinecone():
     Uses the Pinecone v3+ SDK which requires instantiating a ``Pinecone`` client
     object rather than calling the legacy ``pinecone.init()`` function.
     """
-    if not settings.PINECONE_API_KEY or not settings.PINECONE_INDEX_NAME:
-        logger.warning("Pinecone configuration is missing (API_KEY or INDEX_NAME not set). Skipping Pinecone initialization.")
+    missing_vars = []
+    if not settings.PINECONE_API_KEY:
+        missing_vars.append("PINECONE_API_KEY")
+    if not settings.PINECONE_INDEX_NAME:
+        missing_vars.append("PINECONE_INDEX_NAME")
+    has_env = bool(settings.PINECONE_ENVIRONMENT)
+    has_cloud_region = bool(settings.PINECONE_CLOUD) and bool(settings.PINECONE_REGION)
+    if not has_env and not has_cloud_region:
+        missing_vars.append("PINECONE_ENVIRONMENT (or both PINECONE_CLOUD + PINECONE_REGION)")
+    if missing_vars:
+        logger.warning(
+            "Pinecone configuration is incomplete. Missing: %s. "
+            "Vector store will be unavailable until these Render Environment Variables are set.",
+            ", ".join(missing_vars),
+        )
         return None
 
     try:
         pc = Pinecone(api_key=settings.PINECONE_API_KEY)
 
-        # Check if the index already exists
-        existing_indexes = [idx.name for idx in pc.list_indexes()]
+        # Check if the index already exists (v5 SDK: items support dict-style access)
+        existing_indexes = [idx["name"] for idx in pc.list_indexes()]
 
         if settings.PINECONE_INDEX_NAME not in existing_indexes:
             cloud = settings.PINECONE_CLOUD or "aws"
@@ -51,12 +64,24 @@ def _init_pinecone():
 
 # Cache the index singleton
 _pinecone_index = None
+# Track whether initialization has been attempted
+_init_attempted = False
 
 def get_index():
-    global _pinecone_index
-    if _pinecone_index is None:
+    global _pinecone_index, _init_attempted
+    if not _init_attempted:
         _pinecone_index = _init_pinecone()
+        _init_attempted = True
     return _pinecone_index
+
+
+def is_initialized() -> bool:
+    """Return True if the Pinecone index is available and ready.
+
+    Use this to distinguish a vector-store configuration failure from a
+    legitimate "no documents found" result.
+    """
+    return get_index() is not None
 
 # -----------------------------------------------------------------------------
 # Public async‑friendly API

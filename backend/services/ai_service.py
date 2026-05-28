@@ -4,6 +4,7 @@ import traceback
 import google.generativeai as genai
 from config import settings
 from services.vector_store import retrieve_chunks
+from services.pinecone_service import is_initialized as pinecone_is_initialized
 from typing import List, Dict, Any
 
 logger = logging.getLogger("askwiseo.ai")
@@ -26,6 +27,22 @@ async def generate_answer(question: str, user_id: str, document_id=None, chat_hi
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set")
     genai.configure(api_key=settings.GEMINI_API_KEY)
+
+    # Check vector store health BEFORE embedding the query
+    if not pinecone_is_initialized():
+        logger.error(
+            "generate_answer called but Pinecone vector store is not initialized. "
+            "Check PINECONE_API_KEY, PINECONE_INDEX_NAME, and PINECONE_CLOUD/PINECONE_REGION "
+            "environment variables on Render."
+        )
+        return {
+            "answer": (
+                "⚠️ The document search service is temporarily unavailable due to a "
+                "server configuration issue. Please contact support — your documents are safe."
+            ),
+            "sources": [],
+            "error_code": "VECTOR_STORE_UNAVAILABLE",
+        }
 
     chunks = await retrieve_chunks(query=question, user_id=user_id, document_id=document_id)
 
