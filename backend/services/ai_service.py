@@ -1,7 +1,9 @@
 import logging
 import traceback
+import os
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from config import settings
 from services.vector_store import retrieve_chunks
 from services.pinecone_service import is_initialized as pinecone_is_initialized
@@ -16,6 +18,13 @@ SYSTEM_PROMPT = """You are Askwiseo, an AI assistant that answers questions base
 - Mention which document the information comes from when relevant.
 """
 
+def _get_genai_client() -> genai.Client:
+    """Return a singleton genai.Client configured with the Gemini API key."""
+    api_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is not set")
+    return genai.Client(api_key=api_key)
+
 def build_context(chunks: List[Dict[str, Any]]) -> str:
     parts = []
     for i, chunk in enumerate(chunks, 1):
@@ -26,7 +35,6 @@ def build_context(chunks: List[Dict[str, Any]]) -> str:
 async def generate_answer(question: str, user_id: str, document_id=None, chat_history=None):
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set")
-    genai.configure(api_key=settings.GEMINI_API_KEY)
 
     # Check vector store health BEFORE embedding the query
     if not pinecone_is_initialized():
@@ -54,23 +62,22 @@ async def generate_answer(question: str, user_id: str, document_id=None, chat_hi
 
     context = build_context(chunks)
 
-    # Build conversation history for multi-turn
+    # Build conversation history for multi-turn (new SDK format)
     history = []
     if chat_history:
         for turn in chat_history[-6:]:
-            history.append({"role": "user", "parts": [turn["question"]]})
-            history.append({"role": "model", "parts": [turn["answer"]]})
+            history.append(types.Content(role="user", parts=[types.Part(text=turn["question"])]))
+            history.append(types.Content(role="model", parts=[types.Part(text=turn["answer"])]))
 
-    model = genai.GenerativeModel(
-        model_name=settings.CHAT_MODEL,
-        system_instruction=SYSTEM_PROMPT,
-    )
-
-    chat = model.start_chat(history=history)
-
+    client = _get_genai_client()
     prompt = f"Context from documents:\n\n{context}\n\n---\n\nQuestion: {question}"
 
     try:
+        chat = client.chats.create(
+            model=settings.CHAT_MODEL,
+            config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+            history=history,
+        )
         response = chat.send_message(prompt)
         answer = response.text
     except Exception as exc:
@@ -90,6 +97,7 @@ async def generate_answer(question: str, user_id: str, document_id=None, chat_hi
 
     return {"answer": answer, "sources": sources}
 
+
 def generate_document_summary(filename: str, text: str) -> dict:
     """
     Generate a summary and extract key topics from document text.
@@ -97,16 +105,10 @@ def generate_document_summary(filename: str, text: str) -> dict:
     """
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set")
-    genai.configure(api_key=settings.GEMINI_API_KEY)
-    
+
     # Use first 3000 chars for summary (cost efficient)
     sample_text = text[:3000]
-    
-    model = genai.GenerativeModel(
-        model_name=settings.CHAT_MODEL,
-        system_instruction="You are a business document analyst. Be concise and professional."
-    )
-    
+
     prompt = f"""Analyze this document and respond ONLY with a valid JSON object, no markdown, no backticks:
 {{
   "summary": "2-3 sentence summary of what this document is about",
@@ -117,9 +119,16 @@ def generate_document_summary(filename: str, text: str) -> dict:
 
 Document name: {filename}
 Document content: {sample_text}"""
-    
+
     try:
-        response = model.generate_content(prompt)
+        client = _get_genai_client()
+        response = client.models.generate_content(
+            model=settings.CHAT_MODEL,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction="You are a business document analyst. Be concise and professional."
+            ),
+        )
         import json
         # Clean response text
         text_response = response.text.strip()

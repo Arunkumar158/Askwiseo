@@ -88,9 +88,9 @@ export function MessageBubble({
   const isUser = message.role === "user";
 
   return (
-    <div className={cn("flex w-full mb-6", isUser ? "justify-end" : "justify-start")}>
+    <div className={cn("flex w-full mb-6 min-w-0", isUser ? "justify-end" : "justify-start")}>
       <div className={cn(
-        "group relative flex flex-col max-w-[85%]",
+        "group relative flex flex-col max-w-[85%] min-w-0",
         isUser ? "items-end" : "items-start"
       )}>
         {/* Assistant Header */}
@@ -110,13 +110,13 @@ export function MessageBubble({
 
         {/* Message Bubble/Card */}
         <div className={cn(
-          "rounded-3xl px-5 py-4 shadow-xl transition-all duration-300",
+          "rounded-3xl px-5 py-4 shadow-xl transition-all duration-300 break-words",
           isUser 
             ? "bg-gradient-to-br from-violet-600 to-indigo-700 text-white shadow-[0_10px_30px_rgba(139,92,246,0.2)]" 
             : "bg-[#121212]/80 backdrop-blur-xl border border-white/5 text-zinc-200"
         )}>
           {isUser ? (
-            <p className="whitespace-pre-wrap leading-relaxed text-base font-inter">{message.content}</p>
+            <p className="whitespace-pre-wrap leading-relaxed text-base font-inter break-words">{message.content}</p>
           ) : message.error_code === "VECTOR_STORE_UNAVAILABLE" ? (
             <div className="flex flex-col gap-3">
               {/* Warning banner */}
@@ -134,15 +134,14 @@ export function MessageBubble({
                   </span>
                 </div>
               </div>
-              {/* The actual message text */}
-              <div className="chat-markdown font-inter text-base text-zinc-400">
+              <div className="chat-markdown font-inter text-base text-zinc-400 break-words">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}
                 </ReactMarkdown>
               </div>
             </div>
           ) : (
-            <div className="chat-markdown font-inter text-base">
+            <div className="chat-markdown font-inter text-base break-words">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.content}
               </ReactMarkdown>

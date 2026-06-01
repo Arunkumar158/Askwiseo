@@ -1,19 +1,35 @@
 import logging
 import traceback
+import os
+from google import genai
 
-import google.generativeai as genai
 from config import settings
 from typing import List, Dict, Any
 from fastapi.concurrency import run_in_threadpool
 
 logger = logging.getLogger("askwiseo.vector_store")
+_genai_client = None
 
 # Embedding utilities (still use Gemini embeddings)
 
-def _init_genai() -> None:
-    if not settings.GEMINI_API_KEY:
-        raise ValueError("GEMINI_API_KEY is not set")
-    genai.configure(api_key=settings.GEMINI_API_KEY)
+def _get_genai_client() -> genai.Client:
+    """Initialize and cache a genai.Client using the GEMINI API key.
+
+    The key can be provided via the environment variable ``GEMINI_API_KEY``
+    or through ``settings.GEMINI_API_KEY``. The client is cached in the module
+    level ``_genai_client`` variable for reuse.
+    """
+    global _genai_client
+    if _genai_client is None:
+        # Prefer environment variable for security; fallback to settings.
+        api_key = os.getenv("GEMINI_API_KEY") or getattr(settings, "GEMINI_API_KEY", None)
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY is not set")
+        _genai_client = genai.Client(api_key=api_key)
+    return _genai_client
+
+
+
 
 
 def _get_model_name() -> str:
@@ -31,30 +47,25 @@ def _get_model_name() -> str:
 
 
 def embed_texts(texts: List[str]) -> List[List[float]]:
-    _init_genai()
+    client = _get_genai_client()
     model_name = _get_model_name()
-    embeddings: List[List[float]] = []
-    for text in texts:
-        result = genai.embed_content(
-            model=model_name,
-            content=text,
-            task_type="retrieval_document",
-            output_dimensionality=768,
-        )
-        embeddings.append(result["embedding"])
-    return embeddings
+    response = client.models.embed_content(
+        model=model_name,
+        contents=texts,
+        config={"task_type": "retrieval_document", "output_dimensionality": 768}
+    )
+    return [e.values for e in response.embeddings]
 
 
 def embed_query(text: str) -> List[float]:
-    _init_genai()
+    client = _get_genai_client()
     model_name = _get_model_name()
-    result = genai.embed_content(
+    response = client.models.embed_content(
         model=model_name,
-        content=text,
-        task_type="retrieval_query",
-        output_dimensionality=768,
+        contents=text,
+        config={"task_type": "retrieval_query", "output_dimensionality": 768}
     )
-    return result["embedding"]
+    return response.embeddings[0].values
 
 # ---------------------------------------------------------------------
 # Pinecone integration – delegate storage/retrieval to pinecone_service
