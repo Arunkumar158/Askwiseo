@@ -1,9 +1,7 @@
 // hooks/useDashboardData.ts
 
 import { useState, useEffect, useCallback } from "react";
-import { listDocuments, getInsights } from "@/lib/api";
-import { getUserPlan } from "@/lib/api";
-import { batchRequests } from "@/lib/batchRequests";
+import { listDocuments, getInsights, getUserPlan, Document, Insights, UserPlan } from "@/lib/api";
 
 export interface DashboardData {
   documents: Document[];
@@ -20,12 +18,11 @@ export function useDashboardData() {
     setLoading(true);
     setError(null);
     try {
-      const results = await batchRequests([
-        () => listDocuments().then(r => r.documents),
-        () => getInsights(),
-        () => getUserPlan(),
+      const [documents, insights, plan] = await Promise.all([
+        listDocuments().then((r) => r.documents),
+        getInsights(),
+        getUserPlan(),
       ]);
-      const [documents, insights, plan] = results;
       setData({ documents, insights, plan });
     } catch (err: any) {
       setError(err.message || "Failed to load dashboard data");

@@ -1,9 +1,11 @@
+import json
 import logging
 import traceback
 import os
 
 from google import genai
 from google.genai import types
+from fastapi.concurrency import run_in_threadpool
 from config import settings
 from services.vector_store import retrieve_chunks
 from services.pinecone_service import is_initialized as pinecone_is_initialized
@@ -18,6 +20,7 @@ SYSTEM_PROMPT = """You are Askwiseo, an AI assistant that answers questions base
 - Mention which document the information comes from when relevant.
 """
 
+
 def _get_genai_client() -> genai.Client:
     """Return a singleton genai.Client configured with the Gemini API key."""
     api_key = getattr(settings, "GEMINI_API_KEY", None) or os.getenv("GEMINI_API_KEY")
@@ -25,12 +28,14 @@ def _get_genai_client() -> genai.Client:
         raise ValueError("GEMINI_API_KEY is not set")
     return genai.Client(api_key=api_key)
 
+
 def build_context(chunks: List[Dict[str, Any]]) -> str:
     parts = []
     for i, chunk in enumerate(chunks, 1):
         filename = chunk["metadata"].get("filename", "Unknown")
         parts.append(f"[Source {i} — {filename}]\n{chunk['text']}")
     return "\n\n---\n\n".join(parts)
+
 
 async def generate_answer(question: str, user_id: str, document_id=None, chat_history=None):
     if not settings.GEMINI_API_KEY:
@@ -72,13 +77,17 @@ async def generate_answer(question: str, user_id: str, document_id=None, chat_hi
     client = _get_genai_client()
     prompt = f"Context from documents:\n\n{context}\n\n---\n\nQuestion: {question}"
 
-    try:
+    def _call_gemini():
         chat = client.chats.create(
             model=settings.CHAT_MODEL,
             config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
             history=history,
         )
-        response = chat.send_message(prompt)
+        return chat.send_message(prompt)
+
+    try:
+        # Run the blocking Gemini HTTP call in a thread to avoid blocking the event loop
+        response = await run_in_threadpool(_call_gemini)
         answer = response.text
     except Exception as exc:
         logger.error("Gemini API call failed: %s\n%s", exc, traceback.format_exc())
@@ -99,9 +108,10 @@ async def generate_answer(question: str, user_id: str, document_id=None, chat_hi
 
 
 def generate_document_summary(filename: str, text: str) -> dict:
-    """
-    Generate a summary and extract key topics from document text.
-    Called automatically after PDF upload.
+    """Generate a summary and extract key topics from document text.
+
+    Called automatically after PDF upload (wrapped in run_in_threadpool
+    by the upload router so it does not block the event loop).
     """
     if not settings.GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set")
@@ -129,8 +139,7 @@ Document content: {sample_text}"""
                 system_instruction="You are a business document analyst. Be concise and professional."
             ),
         )
-        import json
-        # Clean response text
+        # Clean response text — strip markdown code fences if present
         text_response = response.text.strip()
         if text_response.startswith("```"):
             text_response = text_response.split("```")[1]
@@ -143,5 +152,5 @@ Document content: {sample_text}"""
             "summary": f"Document uploaded successfully: {filename}",
             "key_topics": [],
             "document_type": "Other",
-            "action_items": []
+            "action_items": [],
         }

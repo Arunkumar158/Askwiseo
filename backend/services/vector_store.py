@@ -1,24 +1,24 @@
 import logging
 import traceback
 import os
+from typing import List, Dict, Any
+
 from google import genai
+from fastapi.concurrency import run_in_threadpool
 
 from config import settings
-from typing import List, Dict, Any
-from fastapi.concurrency import run_in_threadpool
+from cache import _embed_cache, _retrieve_cache, cache_key, get_from_cache, set_in_cache
 
 logger = logging.getLogger("askwiseo.vector_store")
 _genai_client = None
 
-# Embedding utilities (still use Gemini embeddings)
+
+# ---------------------------------------------------------------------------
+# Gemini Embedding client
+# ---------------------------------------------------------------------------
 
 def _get_genai_client() -> genai.Client:
-    """Initialize and cache a genai.Client using the GEMINI API key.
-
-    The key can be provided via the environment variable ``GEMINI_API_KEY``
-    or through ``settings.GEMINI_API_KEY``. The client is cached in the module
-    level ``_genai_client`` variable for reuse.
-    """
+    """Initialize and cache a genai.Client using the GEMINI API key."""
     global _genai_client
     if _genai_client is None:
         # Prefer environment variable for security; fallback to settings.
@@ -29,47 +29,91 @@ def _get_genai_client() -> genai.Client:
     return _genai_client
 
 
-
-
-
 def _get_model_name() -> str:
-    """Gets the embedding model name and normalizes it to start with 'models/' exactly once."""
+    """Gets the embedding model name and normalises it to start with 'models/' exactly once."""
     model_name = getattr(settings, "EMBEDDING_MODEL", "models/gemini-embedding-2")
     if not model_name:
         model_name = "models/gemini-embedding-2"
     model_name = model_name.strip()
-    
     # Strip any leading 'models/' first to normalize, then prefix with 'models/'
     while model_name.startswith("models/"):
         model_name = model_name[len("models/"):]
-        
     return f"models/{model_name}"
 
 
-def embed_texts(texts: List[str]) -> List[List[float]]:
+# ---------------------------------------------------------------------------
+# Synchronous embedding helpers (always called via run_in_threadpool)
+# ---------------------------------------------------------------------------
+
+def _embed_texts_sync(texts: List[str]) -> List[List[float]]:
+    """Blocking call — must be called via run_in_threadpool."""
     client = _get_genai_client()
     model_name = _get_model_name()
     response = client.models.embed_content(
         model=model_name,
         contents=texts,
-        config={"task_type": "retrieval_document", "output_dimensionality": 768}
+        config={"task_type": "retrieval_document", "output_dimensionality": 768},
     )
     return [e.values for e in response.embeddings]
 
 
-def embed_query(text: str) -> List[float]:
+def _embed_query_sync(text: str) -> List[float]:
+    """Blocking call — must be called via run_in_threadpool."""
     client = _get_genai_client()
     model_name = _get_model_name()
     response = client.models.embed_content(
         model=model_name,
         contents=text,
-        config={"task_type": "retrieval_query", "output_dimensionality": 768}
+        config={"task_type": "retrieval_query", "output_dimensionality": 768},
     )
     return response.embeddings[0].values
 
-# ---------------------------------------------------------------------
-# Pinecone integration – delegate storage/retrieval to pinecone_service
-# ---------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Public async wrappers (non-blocking)
+# ---------------------------------------------------------------------------
+
+async def embed_texts(texts: List[str]) -> List[List[float]]:
+    """Generate document embeddings asynchronously (does NOT block the event loop).
+
+    Results are cached for 5 minutes to reduce Gemini API costs on repeated uploads.
+    Large text lists are chunked into batches of 50 to respect API limits.
+    """
+    BATCH_SIZE = 50
+    all_embeddings: List[List[float]] = []
+
+    for i in range(0, len(texts), BATCH_SIZE):
+        batch = texts[i : i + BATCH_SIZE]
+        # Build a cache key for this batch
+        key = cache_key("embed_texts", *batch)
+        cached = get_from_cache(_embed_cache, key)
+        if cached is not None:
+            all_embeddings.extend(cached)
+            continue
+        result = await run_in_threadpool(_embed_texts_sync, batch)
+        set_in_cache(_embed_cache, key, result)
+        all_embeddings.extend(result)
+
+    return all_embeddings
+
+
+async def embed_query(text: str) -> List[float]:
+    """Generate a query embedding asynchronously (does NOT block the event loop).
+
+    Results are cached for 5 minutes.
+    """
+    key = cache_key("embed_query", text)
+    cached = get_from_cache(_embed_cache, key)
+    if cached is not None:
+        return cached
+    result = await run_in_threadpool(_embed_query_sync, text)
+    set_in_cache(_embed_cache, key, result)
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Pinecone integration — delegate storage/retrieval to pinecone_service
+# ---------------------------------------------------------------------------
 
 from services.pinecone_service import (
     upsert_document_chunks,
@@ -77,13 +121,14 @@ from services.pinecone_service import (
     query_vectors,
 )
 
+
 async def store_chunks(document_id: str, user_id: str, filename: str, chunks: List[str]) -> int:
     """Generate embeddings for chunks and upsert them into Pinecone.
 
     Returns the number of chunks indexed.
     """
     try:
-        embeddings = embed_texts(chunks)
+        embeddings = await embed_texts(chunks)
     except Exception as exc:
         logger.error(
             "Embedding generation failed for file %s (ID: %s) of user %s: %s\n%s",
@@ -91,7 +136,7 @@ async def store_chunks(document_id: str, user_id: str, filename: str, chunks: Li
             document_id,
             user_id,
             exc,
-            traceback.format_exc()
+            traceback.format_exc(),
         )
         raise ValueError(f"Failed to generate embeddings for document: {exc}")
 
@@ -104,6 +149,7 @@ async def store_chunks(document_id: str, user_id: str, filename: str, chunks: Li
     )
     return len(chunks)
 
+
 async def retrieve_chunks(
     query: str,
     user_id: str,
@@ -113,9 +159,18 @@ async def retrieve_chunks(
     """Retrieve relevant chunks from Pinecone based on a query.
 
     Returns a list of dicts with ``text``, ``metadata`` and ``score``.
+    Results are cached for 5 minutes.
     """
+    top_k = n_results or settings.MAX_RETRIEVED_CHUNKS
+
+    # Check retrieve cache first
+    r_key = cache_key("retrieve", query, user_id, document_id, top_k)
+    cached_chunks = get_from_cache(_retrieve_cache, r_key)
+    if cached_chunks is not None:
+        return cached_chunks
+
     try:
-        query_emb = embed_query(query)
+        query_emb = await embed_query(query)
     except Exception as exc:
         logger.error("Failed to generate query embedding: %s\n%s", exc, traceback.format_exc())
         return []  # Graceful fallback — generate_answer handles empty chunks
@@ -123,7 +178,6 @@ async def retrieve_chunks(
     filter_dict: Dict[str, Any] = {"user_id": user_id}
     if document_id:
         filter_dict["document_id"] = document_id
-    top_k = n_results or settings.MAX_RETRIEVED_CHUNKS
 
     try:
         matches = await query_vectors(
@@ -144,10 +198,13 @@ async def retrieve_chunks(
             {
                 "text": metadata.get("text", ""),
                 "metadata": metadata,
-                "score": m.get("score", 0),  # Pinecone cosine already returns similarity
+                "score": m.get("score", 0),
             }
         )
+
+    set_in_cache(_retrieve_cache, r_key, chunks)
     return chunks
+
 
 async def delete_document_chunks(document_id: str, user_id: str) -> None:
     """Delete all vectors for a document belonging to a user."""

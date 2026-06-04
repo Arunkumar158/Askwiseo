@@ -1,9 +1,11 @@
 import logging
+import threading
 import traceback
 from typing import List, Dict, Any
 
 from pinecone import Pinecone, ServerlessSpec
 from fastapi.concurrency import run_in_threadpool
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from config import settings
 
@@ -16,9 +18,8 @@ logger = logging.getLogger("askwiseo.pinecone")
 def _init_pinecone():
     """Initialize Pinecone client and return the index instance.
 
-    This function is idempotent – it will create the index if it does not exist.
-    The index is configured for dense vectors with dimension 768 and cosine metric
-    as required by the migration plan.
+    This function is idempotent — it will create the index if it does not exist.
+    The index is configured for dense vectors with dimension 768 and cosine metric.
 
     Uses the Pinecone v3+ SDK which requires instantiating a ``Pinecone`` client
     object rather than calling the legacy ``pinecone.init()`` function.
@@ -49,7 +50,12 @@ def _init_pinecone():
         if settings.PINECONE_INDEX_NAME not in existing_indexes:
             cloud = settings.PINECONE_CLOUD or "aws"
             region = settings.PINECONE_REGION or "us-east-1"
-            logger.info("Creating Pinecone index '%s' on %s/%s", settings.PINECONE_INDEX_NAME, cloud, region)
+            logger.info(
+                "Creating Pinecone index '%s' on %s/%s",
+                settings.PINECONE_INDEX_NAME,
+                cloud,
+                region,
+            )
             pc.create_index(
                 name=settings.PINECONE_INDEX_NAME,
                 dimension=768,
@@ -62,26 +68,49 @@ def _init_pinecone():
         logger.error("Pinecone initialization failed: %s\n%s", exc, traceback.format_exc())
         raise RuntimeError(f"Pinecone initialization failed: {exc}") from exc
 
-# Cache the index singleton
+
+# Cache the index singleton — protected by a threading.Lock for thread safety
 _pinecone_index = None
-# Track whether initialization has been attempted
 _init_attempted = False
+_lock = threading.Lock()
+
 
 def get_index():
+    """Return the cached Pinecone index, initialising once if needed.
+
+    Uses double-checked locking so that concurrent requests from multiple
+    uvicorn worker threads do not race to call ``_init_pinecone()`` twice.
+    """
     global _pinecone_index, _init_attempted
     if not _init_attempted:
-        _pinecone_index = _init_pinecone()
-        _init_attempted = True
+        with _lock:
+            if not _init_attempted:          # second check inside lock
+                _pinecone_index = _init_pinecone()
+                _init_attempted = True
     return _pinecone_index
 
 
 def is_initialized() -> bool:
-    """Return True if the Pinecone index is available and ready.
-
-    Use this to distinguish a vector-store configuration failure from a
-    legitimate "no documents found" result.
-    """
+    """Return True if the Pinecone index is available and ready."""
     return get_index() is not None
+
+
+# -----------------------------------------------------------------------------
+# Retry decorator for transient Pinecone errors
+# -----------------------------------------------------------------------------
+
+def _pinecone_retry(fn):
+    """Apply tenacity exponential-backoff retry to a Pinecone operation."""
+    return retry(
+        reraise=True,
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=10),
+        retry=retry_if_exception_type(Exception),
+        before_sleep=lambda rs: logger.warning(
+            "Pinecone transient error, retrying (attempt %d)…", rs.attempt_number
+        ),
+    )(fn)
+
 
 # -----------------------------------------------------------------------------
 # Public async‑friendly API
@@ -97,9 +126,9 @@ async def upsert_vectors(
 
     Args:
         ids: Unique identifiers for the vectors (e.g. "doc123_chunk_0").
-        embeddings: List of 768‑dim float vectors.
+        embeddings: List of 768-dim float vectors.
         metadatas: Corresponding metadata dictionaries.
-        namespace: Pinecone namespace – we use the Firebase ``user_id`` to isolate
+        namespace: Pinecone namespace — we use the Firebase ``user_id`` to isolate
             each user's data.
     """
     index = get_index()
@@ -108,7 +137,12 @@ async def upsert_vectors(
         return
 
     vectors = [(vid, vec, meta) for vid, vec, meta in zip(ids, embeddings, metadatas)]
-    await run_in_threadpool(index.upsert, vectors=vectors, namespace=namespace)
+
+    @_pinecone_retry
+    def _do_upsert():
+        index.upsert(vectors=vectors, namespace=namespace)
+
+    await run_in_threadpool(_do_upsert)
 
 
 async def query_vectors(
@@ -119,16 +153,17 @@ async def query_vectors(
 ) -> List[Dict[str, Any]]:
     """Query Pinecone for the nearest neighbours.
 
-    Returns a list of matches where each entry contains ``id``, ``score``, ``metadata`` and ``values``.
+    Returns a list of matches where each entry contains ``id``, ``score``,
+    ``metadata`` and ``values``.
     """
     index = get_index()
     if index is None:
         logger.warning("Pinecone is not initialized. Returning empty query results.")
         return []
 
-    try:
-        response = await run_in_threadpool(
-            index.query,
+    @_pinecone_retry
+    def _do_query():
+        return index.query(
             vector=query_embedding,
             top_k=top_k,
             namespace=namespace,
@@ -136,6 +171,9 @@ async def query_vectors(
             include_values=False,
             include_metadata=True,
         )
+
+    try:
+        response = await run_in_threadpool(_do_query)
         return response.get("matches", [])
     except Exception as exc:
         logger.error("Pinecone query error: %s\n%s", exc, traceback.format_exc())
@@ -161,6 +199,7 @@ async def delete_by_filter(filter: Dict[str, Any], namespace: str) -> None:
 
     await run_in_threadpool(index.delete, filter=filter, namespace=namespace)
 
+
 # -----------------------------------------------------------------------------
 # Convenience wrappers used by ``vector_store.py``
 # -----------------------------------------------------------------------------
@@ -172,7 +211,7 @@ async def upsert_document_chunks(
     chunks: List[str],
     embeddings: List[List[float]],
 ) -> None:
-    """Helper used by ``vector_store.store_chunks`` – builds metadata and calls ``upsert_vectors``."""
+    """Helper used by ``vector_store.store_chunks`` — builds metadata and calls ``upsert_vectors``."""
     ids = [f"{document_id}_chunk_{i}" for i in range(len(chunks))]
     metadatas = [
         {

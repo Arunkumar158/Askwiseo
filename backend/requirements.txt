@@ -13,3 +13,6 @@ paypalrestsdk==1.13.3
 sentry-sdk==2.5.0
 cloudinary==1.41.0
 prometheus-client==0.20.0
+cachetools==5.3.3
+slowapi==0.1.9
+tenacity==8.3.0

@@ -89,10 +89,18 @@ async function fetchWithNetworkMessage(url: string, init: RequestInit): Promise<
     }
 }
 
+/**
+ * Authenticated fetch wrapper with automatic token refresh on 401.
+ *
+ * Retry strategy:
+ *  - On network error for idempotent methods (GET/HEAD): one immediate retry.
+ *  - On 401 with a signed-in user: retry once with a force-refreshed token.
+ */
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${getBaseUrl()}${path}`;
     const method = (options.method || "GET").toUpperCase();
-    const canRetryNetwork = method === "GET" || method === "HEAD";
+    const isIdempotent = method === "GET" || method === "HEAD";
+
     const request = async (forceRefresh: boolean) => {
         const authHeaders = await getAuthHeaders(forceRefresh);
         return fetchWithNetworkMessage(url, {
@@ -104,11 +112,17 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     let response: Response;
     try {
         response = await request(false);
-    } catch (error) {
-        if (!canRetryNetwork) throw error;
-        response = await request(false);
+    } catch (networkError) {
+        // One retry for idempotent requests on network failure
+        if (!isIdempotent) throw networkError;
+        try {
+            response = await request(false);
+        } catch {
+            throw networkError; // rethrow original error if retry also fails
+        }
     }
 
+    // Refresh token and retry once on 401
     if (response.status === 401 && auth.currentUser) {
         response = await request(true);
     }
@@ -158,7 +172,7 @@ export async function getDocument(documentId: string): Promise<Document> {
 }
 
 export async function deleteDocument(documentId: string): Promise<{ success: boolean }> {
-    return apiFetch(`/api/documents/${documentId}`, { method: "DELETE" });
+    return apiFetch(`/api/documents/${encodeURIComponent(documentId)}`, { method: "DELETE" });
 }
 
 export async function getInsights(): Promise<Insights> {
@@ -221,7 +235,9 @@ export async function getUserPlan(): Promise<UserPlan> {
     };
 }
 
-export async function createRazorpayOrder(planId: string): Promise<{ order_id: string; amount: number; currency: string }> {
+export async function createRazorpayOrder(
+    planId: string
+): Promise<{ order_id: string; amount: number; currency: string }> {
     return apiFetch("/api/billing/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

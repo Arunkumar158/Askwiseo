@@ -1,9 +1,11 @@
 from firebase_admin import firestore
-from typing import List, Dict, Any
+from google.cloud.firestore_v1 import Increment
+from typing import List, Dict, Any, Optional
 import uuid
 from datetime import datetime, timezone
 
 _db = None
+
 
 def get_db():
     global _db
@@ -13,6 +15,7 @@ def get_db():
         _db = firestore.client()
     return _db
 
+
 def create_document_record(
     user_id: str,
     filename: str,
@@ -21,15 +24,19 @@ def create_document_record(
     file_size_bytes: int,
     file_hash: str = None,
     summary: str = "",
-    key_topics: list = [],
+    key_topics: Optional[List[str]] = None,      # FIX: was mutable default []
     document_type: str = "Other",
-    action_items: list = [],
+    action_items: Optional[List[str]] = None,    # FIX: was mutable default []
     file_url: str = "",
     doc_id: str = None,
+    status: str = "ready",
 ) -> Dict[str, Any]:
     db = get_db()
     if not doc_id:
         doc_id = str(uuid.uuid4())
+    # Resolve None defaults to empty lists
+    key_topics = key_topics or []
+    action_items = action_items or []
     now = datetime.now(timezone.utc).isoformat()
     data = {
         "id": doc_id,
@@ -39,7 +46,7 @@ def create_document_record(
         "chunk_count": chunk_count,
         "file_size_bytes": file_size_bytes,
         "file_hash": file_hash,
-        "status": "ready",
+        "status": status,
         "summary": summary,
         "key_topics": key_topics,
         "document_type": document_type,
@@ -51,20 +58,34 @@ def create_document_record(
     db.collection("documents").document(doc_id).set(data)
     return data
 
+
+def update_document_status(doc_id: str, status: str) -> None:
+    """Update only the status and updated_at fields of a document record."""
+    db = get_db()
+    db.collection("documents").document(doc_id).update({
+        "status": status,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+
 def get_document_by_hash(user_id: str, file_hash: str):
     db = get_db()
-    docs = db.collection("documents") \
-        .where("user_id", "==", user_id) \
-        .where("file_hash", "==", file_hash) \
-        .limit(1).stream()
-    
+    docs = (
+        db.collection("documents")
+        .where("user_id", "==", user_id)
+        .where("file_hash", "==", file_hash)
+        .limit(1)
+        .stream()
+    )
     for doc in docs:
         return doc.to_dict()
     return None
 
+
 def count_user_documents(user_id: str) -> int:
     db = get_db()
     return db.collection("documents").where("user_id", "==", user_id).count().get()[0][0].value
+
 
 def get_user_documents(user_id: str):
     db = get_db()
@@ -72,6 +93,7 @@ def get_user_documents(user_id: str):
     doc_list = [doc.to_dict() for doc in docs]
     # Sort by created_at descending in Python to avoid needing a composite index
     return sorted(doc_list, key=lambda x: x.get("created_at", ""), reverse=True)
+
 
 def get_document(document_id: str, user_id: str):
     db = get_db()
@@ -83,76 +105,86 @@ def get_document(document_id: str, user_id: str):
         return None
     return data
 
+
 def delete_document_record(document_id: str, user_id: str) -> bool:
     if not get_document(document_id, user_id):
         return False
     get_db().collection("documents").document(document_id).delete()
     return True
 
+
 def save_chat_message(user_id, document_id, question, answer, sources):
     db = get_db()
     chat_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
     data = {
-        "id": chat_id, "user_id": user_id, "document_id": document_id,
-        "question": question, "answer": answer, "sources": sources, "created_at": now,
+        "id": chat_id,
+        "user_id": user_id,
+        "document_id": document_id,
+        "question": question,
+        "answer": answer,
+        "sources": sources,
+        "created_at": now,
     }
     db.collection("chat_history").document(chat_id).set(data)
     return data
+
 
 def get_chat_history(user_id: str, document_id=None, limit: int = 20):
     db = get_db()
     query = db.collection("chat_history").where("user_id", "==", user_id)
     if document_id:
         query = query.where("document_id", "==", document_id)
-    
-    # We fetch without order_by to avoid composite index requirements
-    # Then sort and limit in Python
+
+    # Fetch without order_by to avoid composite index requirements,
+    # then sort and limit in Python.
     chats_data = query.stream()
     chat_list = [c.to_dict() for c in chats_data]
-    
+
     # Sort by created_at descending
     sorted_chats = sorted(chat_list, key=lambda x: x.get("created_at", ""), reverse=True)
-    
-    # Take the limit and then reverse back for chronological order in UI
+
+    # Take the limit and reverse back for chronological order in UI
     return list(reversed(sorted_chats[:limit]))
+
 
 def get_user_insights(user_id: str) -> Dict[str, Any]:
     db = get_db()
     docs = db.collection("documents").where("user_id", "==", user_id).stream()
     doc_list = [doc.to_dict() for doc in docs]
-    
+
     total_pages = 0
     total_chunks = 0
     total_size = 0
-    type_counts = {}
-    topic_counts = {}
+    type_counts: Dict[str, int] = {}
+    topic_counts: Dict[str, int] = {}
     all_action_items = []
-    
+
     for doc in doc_list:
         total_pages += doc.get("page_count", 0)
         total_chunks += doc.get("chunk_count", 0)
         total_size += doc.get("file_size_bytes", 0)
-        
+
         doc_type = doc.get("document_type", "Other")
         type_counts[doc_type] = type_counts.get(doc_type, 0) + 1
-        
+
         for topic in doc.get("key_topics", []):
             topic_counts[topic] = topic_counts.get(topic, 0) + 1
-            
+
         for item in doc.get("action_items", []):
-            all_action_items.append({
-                "text": item,
-                "source": doc.get("filename", "Unknown"),
-                "document_id": doc.get("id")
-            })
-            
-    # Sort topics by count
+            all_action_items.append(
+                {
+                    "text": item,
+                    "source": doc.get("filename", "Unknown"),
+                    "document_id": doc.get("id"),
+                }
+            )
+
     sorted_topics = [
-        {"topic": t, "count": c} 
+        {"topic": t, "count": c}
         for t, c in sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
     ]
-    
+
     return {
         "total_documents": len(doc_list),
         "total_pages": total_pages,
@@ -160,8 +192,9 @@ def get_user_insights(user_id: str) -> Dict[str, Any]:
         "total_size_bytes": total_size,
         "document_types": type_counts,
         "top_topics": sorted_topics[:15],
-        "all_action_items": all_action_items
+        "all_action_items": all_action_items,
     }
+
 
 def get_user_plan(user_id: str) -> Dict[str, Any]:
     db = get_db()
@@ -177,30 +210,45 @@ def get_user_plan(user_id: str) -> Dict[str, Any]:
             "storage_limit_bytes": 5242880,
             "paypal_subscription_id": "",
             "created_at": now,
-            "last_question_date": now[:10]
+            "last_question_date": now[:10],
         }
         db.collection("user_plans").document(user_id).set(default_plan)
         return default_plan
     return ref.to_dict()
 
+
 def update_user_plan(user_id: str, updates: Dict[str, Any]) -> None:
     db = get_db()
     db.collection("user_plans").document(user_id).set(updates, merge=True)
 
-def get_question_count_today(user_id: str) -> int:
+
+def get_question_count_today(user_id: str) -> tuple:
+    """Return (questions_today: int, plan: dict) in a single Firestore read.
+
+    Resets the counter if ``last_question_date`` is not today so callers
+    do not need to call ``get_user_plan`` again.
+    """
     plan = get_user_plan(user_id)
     today = datetime.now(timezone.utc).isoformat()[:10]
-    
+
     if plan.get("last_question_date") != today:
         update_user_plan(user_id, {
             "questions_today": 0,
-            "last_question_date": today
+            "last_question_date": today,
         })
-        return 0
-    return plan.get("questions_today", 0)
+        plan["questions_today"] = 0
+
+    return plan.get("questions_today", 0), plan
+
 
 def increment_questions_today(user_id: str) -> None:
-    current_count = get_question_count_today(user_id)
-    update_user_plan(user_id, {
-        "questions_today": current_count + 1
+    """Atomically increment today's question counter using Firestore server-side Increment.
+
+    This avoids the read-then-write race condition that existed in the previous
+    implementation where two concurrent requests could both read '5' and both
+    write '6', effectively skipping a count increment.
+    """
+    db = get_db()
+    db.collection("user_plans").document(user_id).update({
+        "questions_today": Increment(1),
     })

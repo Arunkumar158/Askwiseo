@@ -11,7 +11,7 @@ import {
   signInWithPopup,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { auth, listenAuthState, isFirebaseConfigured } from "@/lib/firebase";
+import { auth, isFirebaseConfigured } from "@/lib/firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +25,10 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/** Determine whether the app is served over HTTPS (production / staging). */
+const isSecureContext =
+  typeof window !== "undefined" && window.location.protocol === "https:";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,15 +41,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onIdTokenChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // Force-refresh to ensure the token is fresh before storing
         const token = await firebaseUser.getIdToken(true);
-        document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax`;
+
+        // Build cookie string — always set SameSite=Lax; add Secure on HTTPS
+        const secureFlag = isSecureContext ? "; Secure" : "";
+        document.cookie = `auth-token=${token}; path=/; max-age=3600; SameSite=Lax${secureFlag}`;
+
         setUser(firebaseUser);
       } else {
-        document.cookie = `auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax`;
+        // Clear the cookie on sign-out
+        document.cookie =
+          "auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
         setUser(null);
       }
       setLoading(false);
     });
+
     return unsubscribe;
   }, []);
 
@@ -59,6 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
+    // REQUEST_OFFLINE_ACCESS adds a refresh_token so the session can outlast
+    // the Firebase ID token's 1-hour TTL.
+    provider.addScope("https://www.googleapis.com/auth/userinfo.email");
     await signInWithPopup(auth, provider);
   };
 
@@ -71,7 +86,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, logOut, resetPassword }}>
+    <AuthContext.Provider
+      value={{ user, loading, signIn, signUp, signInWithGoogle, logOut, resetPassword }}
+    >
       {children}
     </AuthContext.Provider>
   );

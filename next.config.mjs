@@ -19,8 +19,15 @@ const nextConfig = {
         source: "/(.*)",
         headers: [
           {
+            // Allow Firebase Auth popup to communicate with opener.
+            // vercel.json is the authoritative source in production;
+            // this covers local dev (next dev / next start).
             key: "Cross-Origin-Opener-Policy",
             value: "same-origin-allow-popups",
+          },
+          {
+            key: "Cross-Origin-Embedder-Policy",
+            value: "unsafe-none",
           },
         ],
       },
@@ -35,8 +42,9 @@ const nextConfig = {
       },
     ]
   },
+  // TypeScript errors are NOT silenced — fix them so bugs don't reach production
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   images: {
     unoptimized: true,
