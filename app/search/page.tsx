@@ -1,31 +1,31 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Search, Filter, BookOpen, Star, Clock, Tag, Loader2, FileText, Upload, Sparkles } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FileText, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
 import { useChat } from "@/hooks/useChat";
 import { useDocuments } from "@/hooks/useDocuments";
 import { usePlan } from "@/hooks/usePlan";
 import { UpgradeModal } from "@/components/upgrade-modal";
-import { cn } from "@/lib/utils";
+import { SidebarToggle } from "@/components/sidebar-toggle";
 import { toast } from "sonner";
 
 export default function SearchPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [input, setInput] = useState("");
-  const [selectedDocId, setSelectedDocId] = useState<string | undefined>(undefined);
+  const selectedDocId = searchParams.get("doc") || undefined;
   const { messages, loading, sendMessage, loadHistory } = useChat(selectedDocId);
   const { documents } = useDocuments();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const { plan, canAskQuestion } = usePlan();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const selectedDocument = documents.find((doc) => doc.id === selectedDocId);
 
   useEffect(() => { loadHistory(); }, [loadHistory, selectedDocId]);
   useEffect(() => {
@@ -70,72 +70,19 @@ export default function SearchPage() {
   return (
     <div className="flex flex-col h-screen bg-[#050505] overflow-hidden">
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar - Documents */}
-        <div className="hidden lg:flex w-80 flex-col border-r border-white/5 bg-[#121212]/50 backdrop-blur-xl">
-          <div className="p-6">
-            <h2 className="text-sm font-bold uppercase tracking-widest text-zinc-500 mb-6 font-sans">Knowledge Base</h2>
-            <div className="space-y-1">
-              <button
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
-                  !selectedDocId 
-                    ? "bg-white/[0.05] text-white border border-white/10" 
-                    : "text-zinc-400 hover:text-white hover:bg-white/[0.02]"
-                )}
-                onClick={() => setSelectedDocId(undefined)}
-              >
-                <BookOpen className={cn("h-4 w-4", !selectedDocId ? "text-violet-400" : "text-zinc-500")} />
-                <span className="text-sm font-medium">All Documents</span>
-              </button>
-              
-              <div className="pt-4 pb-2">
-                <div className="h-px bg-white/5 w-full" />
-              </div>
-
-              <ScrollArea className="h-[calc(100vh-16rem)]">
-                <div className="space-y-1 pr-3">
-                  {documents.map((doc) => (
-                    <button
-                      key={doc.id}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all duration-200 group",
-                        selectedDocId === doc.id 
-                          ? "bg-white/[0.05] text-white border border-white/10" 
-                          : "text-zinc-400 hover:text-white hover:bg-white/[0.02]"
-                      )}
-                      onClick={() => setSelectedDocId(doc.id)}
-                    >
-                      <FileText className={cn("h-4 w-4 shrink-0", selectedDocId === doc.id ? "text-violet-400" : "text-zinc-500")} />
-                      <span className="text-sm font-medium truncate text-left">{doc.filename}</span>
-                    </button>
-                  ))}
-                </div>
-              </ScrollArea>
-            </div>
-          </div>
-          
-          <div className="mt-auto p-6 border-t border-white/5">
-             <Button 
-               variant="outline" 
-               className="w-full justify-start gap-2 border-dashed border-white/10 hover:bg-white/5"
-               onClick={() => router.push("/uploads")}
-             >
-               <Upload className="h-4 w-4" />
-               <span>Add more data</span>
-             </Button>
-          </div>
-        </div>
-
         {/* Main Chat Interface */}
         <div className="flex-1 flex flex-col relative bg-[#050505]">
           {/* Header */}
           <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#050505]/80 backdrop-blur-md z-10">
             <div className="flex items-center gap-3">
+              <div className="md:hidden">
+                <SidebarToggle />
+              </div>
               <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]" />
               <h1 className="text-sm font-semibold text-zinc-200 font-sans truncate max-w-md">
                 {selectedDocId
-                  ? documents.find(d => d.id === selectedDocId)?.filename
-                  : "Global Intelligence Mode"}
+                  ? selectedDocument?.filename || "Selected document"
+                  : `Global Intelligence Mode — Searching ${documents.length} documents`}
               </h1>
             </div>
             <div className="flex items-center gap-2">
@@ -236,4 +183,4 @@ export default function SearchPage() {
       />
     </div>
   );
-}
+}
